@@ -30,15 +30,16 @@ class WhitePawn:
 
     def possible_captures(self, board):
         if self.col == 0 and board[self.row - 1][self.col + 1] != 0:
-            return ['axb' + str(self.row - 1)]
-        if self.col == 1 and board[self.row - 1][self.col - 1] != 0:
-            return ['hxg' + str(self.row - 1)]
+            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1))] # axb
+        if self.col == 7 and board[self.row - 1][self.col - 1] != 0:
+            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
         if board[self.row - 1][self.col - 1] != 0 and board[self.row - 1][self.col + 1] != 0:
-            return ['possible both ways']
+            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1)),
+                get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
         if board[self.row - 1][self.col - 1] != 0:
-            return ['left']
-        if board[self.row - 1][self.col - 1] != 0:
-            return ['right']
+            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
+        if board[self.row - 1][self.col + 1] != 0:
+            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1))]
         
     def capture(self, board):
         return self.possible_captures(board)
@@ -63,15 +64,16 @@ class BlackPawn:
     
     def possible_captures(self, board):
         if self.col == 0 and board[self.row + 1][self.col + 1] != 0:
-            return ['axb' + str(self.row + 1)]
-        if self.col == 1 and board[self.row + 1][self.col - 1] != 0:
-            return ['hxg' + str(self.row + 1)]
+            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1))] # axb
+        if self.col == 7 and board[self.row + 1][self.col - 1] != 0:
+            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
         if board[self.row + 1][self.col - 1] != 0 and board[self.row + 1][self.col + 1] != 0:
-            return ['possible both ways']
+            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1)),
+                get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
         if board[self.row + 1][self.col - 1] != 0:
-            return ['left']
-        if board[self.row + 1][self.col - 1] != 0:
-            return ['right']
+            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
+        if board[self.row + 1][self.col + 1] != 0:
+            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1))]
     
     def capture(self, board):
         return self.possible_captures(board)

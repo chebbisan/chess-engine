@@ -9,8 +9,8 @@ from pawn import WhitePawn, BlackPawn
 board = [[0, 0, 0, 0, 0, 0, 0, 0], 
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 1, 0, 1, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 1, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0]]
@@ -37,3 +37,12 @@ print(white_impossible_to_move_pawn.move(board)) # []
 
 black_impossible_to_move_pawn = BlackPawn('d1')
 print(white_impossible_to_move_pawn.move(board)) # []
+
+white_takes_pawn_left = WhitePawn('a3')
+print(white_takes_pawn_left.capture(board)) # ['axb4']
+
+white_takes_pawn_right = WhitePawn('h3')
+print(white_takes_pawn_right.capture(board)) # ['hxg4']
+
+white_takes_pawn_center = WhitePawn('d4')
+print(white_takes_pawn_center.capture(board)) # ['dxe5', 'dxc5']
