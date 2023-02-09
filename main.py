@@ -1,16 +1,16 @@
-# version 1 : board and pawn move
+# version 3 : optimized pawn capture
 # author : cheb
 # chess engine
 
-# updated coordinates, added impossible pawn moves, separated white and black pawn class
+# pawn capture optimized
 
 from pawn import WhitePawn, BlackPawn
 
 board = [[0, 0, 0, 0, 0, 0, 0, 0], 
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 1, 0, 1, 0, 0, 0],
-         [0, 1, 0, 0, 0, 0, 1, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0]]
@@ -26,23 +26,56 @@ coordinates = {
     'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7)}
 
     
-white_king_pawn = WhitePawn('e2')
-print(white_king_pawn.move(board)) # ['e3', 'e4']
+# white pawns
+a_pawn_w = WhitePawn('a2')
+board[coordinates['a2'][0]][coordinates['a2'][1]] = a_pawn_w.color
 
-black_king_pawn = BlackPawn('e7')
-print(black_king_pawn.move(board)) # ['e6', 'e5']
+b_pawn_w = WhitePawn('b2')
+board[coordinates['b2'][0]][coordinates['b2'][1]] = b_pawn_w.color
 
-white_impossible_to_move_pawn = WhitePawn('d8')
-print(white_impossible_to_move_pawn.move(board)) # []
+c_pawn_w = WhitePawn('c2')
+board[coordinates['c2'][0]][coordinates['c2'][1]] = c_pawn_w.color
 
-black_impossible_to_move_pawn = BlackPawn('d1')
-print(white_impossible_to_move_pawn.move(board)) # []
+d_pawn_w = WhitePawn('d2')
+board[coordinates['d2'][0]][coordinates['d2'][1]] = d_pawn_w.color
 
-white_takes_pawn_left = WhitePawn('a3')
-print(white_takes_pawn_left.capture(board)) # ['axb4']
+e_pawn_w = WhitePawn('e2')
+board[coordinates['e2'][0]][coordinates['e2'][1]] = e_pawn_w.color
 
-white_takes_pawn_right = WhitePawn('h3')
-print(white_takes_pawn_right.capture(board)) # ['hxg4']
+f_pawn_w = WhitePawn('f2')
+board[coordinates['f2'][0]][coordinates['f2'][1]] = f_pawn_w.color
 
-white_takes_pawn_center = WhitePawn('d4')
-print(white_takes_pawn_center.capture(board)) # ['dxe5', 'dxc5']
+g_pawn_w = WhitePawn('g2')
+board[coordinates['g2'][0]][coordinates['g2'][1]] = g_pawn_w.color
+
+h_pawn_w = WhitePawn('h2')
+board[coordinates['h2'][0]][coordinates['h2'][1]] = h_pawn_w.color
+
+
+# black pawns
+a_pawn_b = BlackPawn('a7')
+board[coordinates['a7'][0]][coordinates['a7'][1]] = a_pawn_b.color
+
+b_pawn_b = BlackPawn('b7')
+board[coordinates['b7'][0]][coordinates['b7'][1]] = b_pawn_b.color
+
+c_pawn_b = BlackPawn('c7')
+board[coordinates['c7'][0]][coordinates['c7'][1]] = c_pawn_b.color
+
+d_pawn_b = BlackPawn('d7')
+board[coordinates['d7'][0]][coordinates['d7'][1]] = d_pawn_b.color
+
+e_pawn_b = BlackPawn('e7')
+board[coordinates['e7'][0]][coordinates['e7'][1]] = e_pawn_b.color
+
+f_pawn_b = BlackPawn('f7')
+board[coordinates['f7'][0]][coordinates['f7'][1]] = f_pawn_b.color
+
+g_pawn_b = BlackPawn('g7')
+board[coordinates['g7'][0]][coordinates['g7'][1]] = g_pawn_b.color
+
+h_pawn_b = BlackPawn('h7')
+board[coordinates['h7'][0]][coordinates['h7'][1]] = h_pawn_b.color
+
+for i in board:
+    print(i)

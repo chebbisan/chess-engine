@@ -14,33 +14,32 @@ coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0,
 
 class WhitePawn:
     def __init__(self, position):
-        self.col = coordinates[position][1]
         self.row = coordinates[position][0]
-        self.move_count = 0 if self.row == 6 else 1
+        self.col = coordinates[position][1]
+        self.color = 1 # white
 
     def possible_moves(self, board):
-        if self.move_count == 0 and self.row == 6 and board[self.row - 2][self.col] == 0 and board[self.row - 1][self.col] == 0:
-            return [get_coordinate((self.row - 1, self.col)), get_coordinate((self.row - 2, self.col))]
-        if self.move_count == 8 or board[self.row - 1][self.col] != 0 or self.row == 0: # проверка не препятствие 
-            return [] 
-        return [get_coordinate((self.row - 1, self.col))]
+        moves = []
+        if self.row - 1 >= 0 and board[self.row - 1][self.col] == 0:
+            moves.append(get_coordinate((self.row - 1, self.col)))
+            if self.row == 6 and board[self.row - 2][self.col] == 0 and moves:
+                moves.append(get_coordinate((self.row - 2, self.col)))
+        return moves
 
     def move(self, board):
         return self.possible_moves(board)
 
     def possible_captures(self, board):
-        if self.col == 0 and board[self.row - 1][self.col + 1] != 0:
-            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1))] # axb
-        if self.col == 7 and board[self.row - 1][self.col - 1] != 0:
-            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
-        if board[self.row - 1][self.col - 1] != 0 and board[self.row - 1][self.col + 1] != 0:
-            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1)),
-                get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
-        if board[self.row - 1][self.col - 1] != 0:
-            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col - 1))]
-        if board[self.row - 1][self.col + 1] != 0:
-            return [get_coordinate((self.row - 1, self.col))[0] + 'x' + get_coordinate((self.row - 1, self.col + 1))]
-        
+        captures = []
+        p_captures = [(-1, -1), (-1, 1)]
+        for p_capture in p_captures:
+            new_row = self.row + p_capture[0]
+            new_col = self.col + p_capture[1]
+            if new_row >= 0 and 0 >= new_col >= 7:
+                if board[new_row][new_col] == -1:
+                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+        return captures
+
     def capture(self, board):
         return self.possible_captures(board)
 
@@ -48,32 +47,31 @@ class WhitePawn:
 
 class BlackPawn:
     def __init__(self, position):
-        self.col = coordinates[position][1]
         self.row = coordinates[position][0]
-        self.move_count = 0
+        self.col = coordinates[position][1]
+        self.color = -1 # black
 
     def possible_moves(self, board):
-        if self.move_count == 0 and self.row == 1 and board[self.row + 2][self.col] == 0 and board[self.row + 1][self.col] == 0:
-            return [get_coordinate((self.row + 1, self.col)), get_coordinate((self.row + 2, self.col))]
-        if self.move_count == 8 or board[self.row + 1][self.col] != 0 or self.row == 7: # проверка не препятствие
-            return [] 
-        return [get_coordinate((self.row + 1, self.col))]
+        moves = []
+        if self.row + 1 <= 7 and board[self.row + 1][self.col] == 0:
+            moves.append(get_coordinate((self.row + 1, self.col)))
+            if self.row == 1 and board[self.row + 2][self.col] == 0 and moves:
+                moves.append(get_coordinate((self.row + 2, self.col)))
+        return moves
 
     def move(self, board):
         return self.possible_moves(board)
-    
+
     def possible_captures(self, board):
-        if self.col == 0 and board[self.row + 1][self.col + 1] != 0:
-            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1))] # axb
-        if self.col == 7 and board[self.row + 1][self.col - 1] != 0:
-            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
-        if board[self.row + 1][self.col - 1] != 0 and board[self.row + 1][self.col + 1] != 0:
-            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1)),
-                get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
-        if board[self.row + 1][self.col - 1] != 0:
-            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col - 1))]
-        if board[self.row + 1][self.col + 1] != 0:
-            return [get_coordinate((self.row + 1, self.col))[0] + 'x' + get_coordinate((self.row + 1, self.col + 1))]
-    
+        captures = []
+        p_captures = [(1, -1), (1, 1)]
+        for p_capture in p_captures:
+            new_row = self.row + p_capture[0]
+            new_col = self.col + p_capture[1]
+            if new_row <= 7 and 0 >= new_col >= 7:
+                if board[new_row][new_col] == 1:
+                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+        return captures
+
     def capture(self, board):
         return self.possible_captures(board)
