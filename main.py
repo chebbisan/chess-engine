@@ -1,10 +1,10 @@
-# version 3 : optimized pawn capture
+# version 4 : added bishop
 # author : cheb
 # chess engine
 
-# pawn capture optimized
+# need to optimize bishop
 
-from pawn import WhitePawn, BlackPawn, Rook
+from pawn import WhitePawn, BlackPawn, Rook, Bishop
 
 board = [[0, 0, 0, 0, 0, 0, 0, 0], 
          [0, 0, 0, 0, 0, 0, 0, 0],
@@ -77,15 +77,15 @@ board[coordinates['g7'][0]][coordinates['g7'][1]] = g_pawn_b.color
 h_pawn_b = BlackPawn('h7')
 board[coordinates['h7'][0]][coordinates['h7'][1]] = h_pawn_b.color
 
-print(f_pawn_b.possible_captures(board))
-print(f_pawn_w.possible_captures(board))
-
 
 a_rook_w = Rook('e5', 1)
 board[coordinates['e5'][0]][coordinates['e5'][1]] = 5 * a_rook_w.color
 
+bishop_w = Bishop('d5', 1)
+board[coordinates['d5'][0]][coordinates['d5'][1]] = 3 * bishop_w.color
+
 print(a_rook_w.move(board))
+print(bishop_w.move(board))
 
 for line in board:
     print(line)
-
