@@ -1,7 +1,7 @@
 def get_coordinate(coordinate):
-    for key in coordinates.keys():
-        if coordinates[key] == coordinate:
-            return key
+    col = chr(ord('a') + coordinate[1])
+    row = str(8 - coordinate[0])
+    return col + row
 
 coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0, 4), 'f8': (0, 5), 'g8': (0, 6), 'h8': (0, 7),
     'a7': (1, 0), 'b7': (1, 1), 'c7': (1, 2), 'd7': (1, 3), 'e7': (1, 4), 'f7': (1, 5), 'g7': (1, 6), 'h7': (1, 7),
@@ -13,10 +13,11 @@ coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0,
     'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7),}
 
 class WhitePawn:
-    def __init__(self, position):
+    def __init__(self, position, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
         self.color = 1 # white
+        board[self.row][self.col] = self.color
 
     def possible_moves(self, board):
         moves = []
@@ -48,10 +49,11 @@ class WhitePawn:
 
 
 class BlackPawn:
-    def __init__(self, position):
+    def __init__(self, position, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
         self.color = -1 # black
+        board[self.row][self.col] = self.color
 
     def possible_moves(self, board):
         moves = []
@@ -81,10 +83,11 @@ class BlackPawn:
         return self.possible_captures(board)
 
 class Rook:
-    def __init__(self, position, color):
+    def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
         self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self.color * 5
 
     def possible_moves(self, board):
         moves = []
@@ -95,6 +98,7 @@ class Rook:
                 moves.append('R' + get_coordinate((self.row, i)))
             elif board[self.row][i] != 0 and (board[self.row][i] * board[self.row][self.col] < 0):
                 captures.append('Rx' + get_coordinate((self.row, i)))
+                break
             else:
                 break
         for i in range(self.col + 1, 8):
@@ -102,6 +106,7 @@ class Rook:
                 moves.append('R' + get_coordinate((self.row, i)))
             elif board[self.row][i] != 0 and (board[self.row][i] * board[self.row][self.col] < 0):
                 captures.append('Rx' + get_coordinate((self.row, i)))
+                break
             else:
                 break
         for i in range(self.row - 1, -1, -1):
@@ -109,6 +114,7 @@ class Rook:
                 moves.append('R' + get_coordinate((i, self.col)))
             elif board[i][self.col] != 0 and (board[i][self.col] * board[self.row][self.col] < 0):
                 captures.append('Rx' + get_coordinate((i, self.col)))
+                break
             else:
                 break
         for i in range(self.row + 1, 8):
@@ -116,6 +122,7 @@ class Rook:
                 moves.append('R' + get_coordinate((i, self.col)))
             elif board[i][self.col] != 0 and (board[i][self.col] * board[self.row][self.col] < 0):
                 captures.append('Rx' + get_coordinate((i, self.col)))
+                break
             else:
                 break
         return moves + captures
@@ -124,10 +131,11 @@ class Rook:
         return self.possible_moves(board)
 
 class Bishop:
-    def __init__(self, position, color):
+    def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
         self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self.color * 3
 
     def possible_moves(self, board):
         moves = []
@@ -139,6 +147,7 @@ class Bishop:
                     moves.append('B' + get_coordinate((self.row - i, self.col - i)))
                 elif board[self.row - i][self.col - i] != 0 and (board[self.row - i][self.col - i] * board[self.row][self.col] < 0): 
                     captures.append('Bx' + get_coordinate((self.row - i, self.col - i)))
+                    break
                 else:
                     break
             else:
@@ -150,6 +159,7 @@ class Bishop:
                     moves.append('B' + get_coordinate((self.row - i, self.col + i)))
                 elif board[self.row - i][self.col + i] != 0 and (board[self.row - i][self.col + i] * board[self.row][self.col] < 0): 
                     captures.append('Bx' + get_coordinate((self.row - i, self.col + i)))
+                    break
                 else:
                     break
             else:
@@ -161,6 +171,7 @@ class Bishop:
                     moves.append('B' + get_coordinate((self.row + i, self.col + i)))
                 elif board[self.row - i][self.col - i] != 0 and (board[self.row - i][self.col - i] * board[self.row][self.col] < 0): 
                     captures.append('Bx' + get_coordinate((self.row + i, self.col + i)))
+                    break
                 else:
                     break
             else:
@@ -172,6 +183,7 @@ class Bishop:
                     moves.append('B' + get_coordinate((self.row + i, self.col - i)))
                 elif board[self.row + i][self.col - i] != 0 and (board[self.row + i][self.col - i] * board[self.row][self.col] < 0): 
                     captures.append('Bx' + get_coordinate((self.row + i, self.col - i)))
+                    break
                 else:
                     break
             else:
