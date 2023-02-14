@@ -4,7 +4,7 @@
 
 # small fixes
 
-from pawn import WhitePawn, BlackPawn, Rook, Bishop
+from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King
 
 board = [[0, 0, 0, 0, 0, 0, 0, 0], 
          [0, 0, 0, 0, 0, 0, 0, 0],
@@ -28,43 +28,60 @@ board = [[0, 0, 0, 0, 0, 0, 0, 0],
     
 # white pawns
 a_pawn_w = WhitePawn('a2', board)
-
 b_pawn_w = WhitePawn('b2', board)
-
 c_pawn_w = WhitePawn('c2', board)
-
 d_pawn_w = WhitePawn('d2', board)
-
 e_pawn_w = WhitePawn('e2', board)
-
 f_pawn_w = WhitePawn('f2', board)
-
 g_pawn_w = WhitePawn('g2', board)
-
 h_pawn_w = WhitePawn('h2', board)
 
 
 # black pawns
 a_pawn_b = BlackPawn('a7', board)
-
 b_pawn_b = BlackPawn('b7', board)
-
 c_pawn_b = BlackPawn('c7', board)
-
 d_pawn_b = BlackPawn('d7', board)
-
 e_pawn_b = BlackPawn('e7', board)
-
 f_pawn_b = BlackPawn('f7', board)
-
 g_pawn_b = BlackPawn('g7', board)
-
 h_pawn_b = BlackPawn('h7', board)
 
+# white knights
+b_knight_w = Knight('b1', 1, board)
+g_knight_w = Knight('g1', 1, board)
 
-a_rook_w = Rook('e5', 1, board)
+# black knights
+b_knight_b = Knight('b8', -1, board)
+g_knight_b = Knight('g8', -1, board)
 
-print(a_rook_w.move(board))
+# white bishops 
+c_bishop_w = Bishop('c1', 1, board)
+f_bishop_w = Bishop('f1', 1, board)
+
+# black bishops
+c_bishop_b = Bishop('c8', -1, board)
+f_bishop_b = Bishop('f8', -1, board)
+
+# white rooks
+a_rook_w = Rook('a1', 1, board)
+h_rook_w = Rook('h1', 1, board)
+
+# black rooks
+a_rook_b = Rook('a8', -1, board)
+h_rook_b = Rook('h8', -1, board)
+
+# white queen
+queen_w = Queen('d1', 1, board)
+
+# black queen 
+queen_b = Queen('d8', -1, board)
+
+# white king
+king_w = King('e1', 1, board)
+
+# black king 
+king_b = King('e8', -1, board)
 
 for line in board:
     print(line)
