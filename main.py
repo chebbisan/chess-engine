@@ -15,6 +15,7 @@ board = [[0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0],
          [0, 0, 0, 0, 0, 0, 0, 0]]
 
+
 # coordinates = {
 #     'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0, 4), 'f8': (0, 5), 'g8': (0, 6), 'h8': (0, 7),
 #     'a7': (1, 0), 'b7': (1, 1), 'c7': (1, 2), 'd7': (1, 3), 'e7': (1, 4), 'f7': (1, 5), 'g7': (1, 6), 'h7': (1, 7),
@@ -82,6 +83,29 @@ king_w = King('e1', 1, board)
 
 # black king 
 king_b = King('e8', -1, board)
+
+white_pieces = [a_pawn_w, b_pawn_w, c_pawn_w, d_pawn_w, e_pawn_w, f_pawn_w, g_pawn_w, h_pawn_w, b_knight_w, g_knight_w, c_bishop_w, f_bishop_w,
+    a_rook_w, h_rook_w, queen_w, king_w]
+
+black_pieces = [a_pawn_b, b_pawn_b, c_pawn_b, d_pawn_b, e_pawn_b, f_pawn_b, g_pawn_b, h_pawn_b, b_knight_b, g_knight_b, c_bishop_b, f_bishop_b,
+    a_rook_b, h_rook_b, queen_b, king_b]
+
+white_moves = []
+black_moves = []
+
+for piece in white_pieces:
+    for move in piece.move(board):
+        white_moves.append(move)
+
+for piece in black_pieces:
+    for move in piece.move(board):
+        black_moves.append(move)
+
+print(white_moves, black_moves, sep='\n')
+
+actual_move = input()
+if actual_move in white_moves:
+    print('yes')
 
 for line in board:
     print(line)

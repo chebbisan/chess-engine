@@ -10,7 +10,7 @@ coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0,
     'a4': (4, 0), 'b4': (4, 1), 'c4': (4, 2), 'd4': (4, 3), 'e4': (4, 4), 'f4': (4, 5), 'g4': (4, 6), 'h4': (4, 7),
     'a3': (5, 0), 'b3': (5, 1), 'c3': (5, 2), 'd3': (5, 3), 'e3': (5, 4), 'f3': (5, 5), 'g3': (5, 6), 'h3': (5, 7),
     'a2': (6, 0), 'b2': (6, 1), 'c2': (6, 2), 'd2': (6, 3), 'e2': (6, 4), 'f2': (6, 5), 'g2': (6, 6), 'h2': (6, 7),
-    'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7),}
+    'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7)}
 
 class WhitePawn:
     def __init__(self, position, board):
@@ -29,7 +29,7 @@ class WhitePawn:
         return moves
 
     def move(self, board):
-        return self.possible_moves(board)
+        return self.possible_moves(board) + self.possible_captures(board)
 
     def possible_captures(self, board):
         captures = []
@@ -42,9 +42,6 @@ class WhitePawn:
                 if board[new_row][new_col] * board[self.row][self.col] < 0:
                     captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
         return captures
-
-    def capture(self, board):
-        return self.possible_captures(board)
 
 
 
@@ -65,7 +62,7 @@ class BlackPawn:
         return moves
 
     def move(self, board):
-        return self.possible_moves(board)
+        return self.possible_moves(board) + self.possible_captures(board)
 
     def possible_captures(self, board):
         captures = []
@@ -79,8 +76,6 @@ class BlackPawn:
                     captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
         return captures
 
-    def capture(self, board):
-        return self.possible_captures(board)
 
 class Rook:
     def __init__(self, position, color, board):
@@ -167,7 +162,7 @@ class Bishop:
             if self.row + i <= 7 and self.col + i <= 7:
                 if board[self.row + i][self.col + i] == 0:
                     moves.append('B' + get_coordinate((self.row + i, self.col + i)))
-                elif board[self.row - i][self.col - i] != 0 and (board[self.row - i][self.col - i] * board[self.row][self.col] < 0): 
+                elif board[self.row + i][self.col + i] != 0 and (board[self.row + i][self.col + i] * board[self.row][self.col] < 0): 
                     moves.append('Bx' + get_coordinate((self.row + i, self.col + i)))
                     break
                 else:
@@ -254,7 +249,7 @@ class Queen:
             if self.row + i <= 7 and self.col + i <= 7:
                 if board[self.row + i][self.col + i] == 0:
                     moves.append('Q' + get_coordinate((self.row + i, self.col + i)))
-                elif board[self.row - i][self.col - i] != 0 and (board[self.row - i][self.col - i] * board[self.row][self.col] < 0): 
+                elif board[self.row + i][self.col + i] != 0 and (board[self.row + i][self.col + i] * board[self.row][self.col] < 0): 
                     moves.append('Qx' + get_coordinate((self.row + i, self.col + i)))
                     break
                 else:
