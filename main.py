@@ -1,8 +1,8 @@
-# version 6 : board rework
+# version 6 : pseudo-playable version
 # author : cheb
 # chess engine
 
-# big changes
+# im bored
 
 from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
 
@@ -14,6 +14,19 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
+
+def move_piece(board, pieces):
+    actual_move = input()
+    for piece in pieces:
+        print(piece)
+        if actual_move in piece.move(board):
+            print('yay')
+            board[piece.row][piece.col] = None
+            piece.row = coordinates[actual_move[-2:]][0]
+            piece.col = coordinates[actual_move[-2:]][1]
+            board[coordinates[actual_move[-2:]][0]][coordinates[actual_move[-2:]][1]] = piece
+            return True
+    return False
 
 
 # coordinates = {
@@ -101,13 +114,13 @@ for piece in black_pieces:
     for move in piece.move(board):
         black_moves.append(move)
 
-actual_move = input() # e4
-for piece in white_pieces:
-    if actual_move in piece.move(board):
-        board[piece.row][piece.col] = None
-        board[coordinates[actual_move][0]][coordinates[actual_move][1]] = piece
-    
-
-for line in board:
-    print(line)
+cnt = 0
+game = True
+while game:
+    move_piece(board, white_pieces)
+    for line in board:
+        print(line)
+    if cnt == 5:
+        game = False
+    cnt += 1
 
