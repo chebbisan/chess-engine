@@ -4,7 +4,7 @@
 
 # big changes
 
-from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King
+from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
 
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -101,5 +101,13 @@ for piece in black_pieces:
     for move in piece.move(board):
         black_moves.append(move)
 
-print(white_moves, black_moves, sep='\n\n')
+actual_move = input() # e4
+for piece in white_pieces:
+    if actual_move in piece.move(board):
+        board[piece.row][piece.col] = None
+        board[coordinates[actual_move][0]][coordinates[actual_move][1]] = piece
+    
+
+for line in board:
+    print(line)
 
