@@ -1,19 +1,19 @@
-# version 4 : fixed rook issue, optimized get_coordinate()
+# version 6 : board rework
 # author : cheb
 # chess engine
 
-# small fixes
+# big changes
 
 from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King
 
-board = [[0, 0, 0, 0, 0, 0, 0, 0], 
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0]]
+board = [[None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None]]
 
 
 # coordinates = {
@@ -101,11 +101,5 @@ for piece in black_pieces:
     for move in piece.move(board):
         black_moves.append(move)
 
-print(white_moves, black_moves, sep='\n')
+print(white_moves, black_moves, sep='\n\n')
 
-actual_move = input()
-if actual_move in white_moves:
-    print('yes')
-
-for line in board:
-    print(line)
