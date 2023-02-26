@@ -322,11 +322,12 @@ class King:
             new_row = self.row + p_move[0]
             new_col = self.col + p_move[1]
             if new_row >= 0 and new_col >= 0 and new_row <= 7 and new_col <= 7:
-                if board[new_row][new_col] == None:
+                if board[new_row][new_col] == None and get_coordinate((new_row, new_col)):
                     moves.append('K' + get_coordinate((new_row, new_col)))
-                elif board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0:
+                elif board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0 and get_coordinate((new_row, new_col)):
                     moves.append('Kx' + get_coordinate((new_row, new_col)))
         return moves
+    
 
     def move(self, board):
         return self.possible_moves(board)

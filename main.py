@@ -17,10 +17,9 @@ board = [[None, None, None, None, None, None, None, None],
 
 def move_piece(board, pieces):
     actual_move = input()
+
     for piece in pieces:
-        print(piece)
         if actual_move in piece.move(board):
-            print('yay')
             board[piece.row][piece.col] = None
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
@@ -100,27 +99,38 @@ king_b = King('e8', -1, board)
 white_pieces = [a_pawn_w, b_pawn_w, c_pawn_w, d_pawn_w, e_pawn_w, f_pawn_w, g_pawn_w, h_pawn_w, b_knight_w, g_knight_w, c_bishop_w, f_bishop_w,
     a_rook_w, h_rook_w, queen_w, king_w]
 
+
 black_pieces = [a_pawn_b, b_pawn_b, c_pawn_b, d_pawn_b, e_pawn_b, f_pawn_b, g_pawn_b, h_pawn_b, b_knight_b, g_knight_b, c_bishop_b, f_bishop_b,
     a_rook_b, h_rook_b, queen_b, king_b]
 
 white_moves = []
 black_moves = []
 
-for piece in white_pieces:
-    for move in piece.move(board):
-        white_moves.append(move)
+# for piece in white_pieces:
+#     for move in piece.move(board):
+#         white_moves.append(move)
 
-for piece in black_pieces:
-    for move in piece.move(board):
-        black_moves.append(move)
+# for piece in black_pieces:
+#     for move in piece.move(board):
+#         black_moves.append(move)
 
 cnt = 0
 game = True
+
+
+table = open(r'chess_table.txt')
+for line in table:
+    print(line, end='')
+table.close()
+
+turn = 0
 while game:
-    move_piece(board, white_pieces)
-    for line in board:
-        print(line)
-    if cnt == 5:
-        game = False
-    cnt += 1
+    if turn == 0 and move_piece(board, white_pieces):
+        turn = 1
+    elif turn == 1 and move_piece(board, black_pieces):
+        turn = 0
+    else:
+        print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
+
+
 
