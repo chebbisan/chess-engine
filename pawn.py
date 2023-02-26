@@ -19,7 +19,7 @@ class WhitePawn:
         self.color = 1 # white
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         moves = []
 
         if self.row - 1 >= 0 and board[self.row - 1][self.col] == None:
@@ -28,10 +28,10 @@ class WhitePawn:
                 moves.append(get_coordinate((self.row - 2, self.col)))
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board) + self.possible_captures(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves) + self.possible_captures(board, op_moves)
 
-    def possible_captures(self, board):
+    def possible_captures(self, board, op_moves):
         captures = []
 
         p_captures = [(-1, -1), (-1, 1)]
@@ -52,7 +52,7 @@ class BlackPawn:
         self.color = -1 # black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         moves = []
 
         if self.row + 1 <= 7 and board[self.row + 1][self.col] == None:
@@ -61,10 +61,10 @@ class BlackPawn:
                 moves.append(get_coordinate((self.row + 2, self.col)))
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board) + self.possible_captures(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves) + self.possible_captures(board, op_moves)
 
-    def possible_captures(self, board):
+    def possible_captures(self, board, op_moves):
         captures = []
 
         p_captures = [(1, -1), (1, 1)]
@@ -84,7 +84,7 @@ class Rook:
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         moves = []
 
         for i in range(self.col - 1, -1, -1):
@@ -121,8 +121,8 @@ class Rook:
                 break
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves)
 
 class Bishop:
     def __init__(self, position, color, board):
@@ -131,7 +131,7 @@ class Bishop:
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         moves = []
 
         for i in range(1, 8):
@@ -184,8 +184,8 @@ class Bishop:
         
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves)
 
 class Knight:
     def __init__(self, position, color, board):
@@ -194,7 +194,7 @@ class Knight:
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
         moves = []
 
@@ -208,8 +208,8 @@ class Knight:
                     moves.append('Nx' + get_coordinate((new_row, new_col)))
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves)
 
 class Queen:
     def __init__(self, position, color, board):
@@ -218,7 +218,7 @@ class Queen:
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         moves = []
 
         for i in range(1, 8):
@@ -304,8 +304,8 @@ class Queen:
 
         return moves
 
-    def move(self, board):
-        return self.possible_moves(board)
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves)
 
 class King:
     def __init__(self, position, color, board):
@@ -314,20 +314,27 @@ class King:
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
 
-    def possible_moves(self, board):
+    def possible_moves(self, board, op_moves):
         p_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
         moves = []
+        ill_moves = self.illegal_moves(op_moves)
 
         for p_move in p_moves:
             new_row = self.row + p_move[0]
             new_col = self.col + p_move[1]
             if new_row >= 0 and new_col >= 0 and new_row <= 7 and new_col <= 7:
-                if board[new_row][new_col] == None and get_coordinate((new_row, new_col)):
+                if board[new_row][new_col] == None and not(get_coordinate((new_row, new_col)) in ill_moves):
                     moves.append('K' + get_coordinate((new_row, new_col)))
-                elif board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0 and get_coordinate((new_row, new_col)):
+                elif board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0 and not(get_coordinate((new_row, new_col)) in ill_moves):
                     moves.append('Kx' + get_coordinate((new_row, new_col)))
         return moves
     
 
-    def move(self, board):
-        return self.possible_moves(board)
+    def illegal_moves(self, op_moves):
+        opponent_moves = op_moves.copy()
+        for i in range(len(opponent_moves)):
+            opponent_moves[i] = opponent_moves[i][-2:]
+        return opponent_moves
+
+    def move(self, board, op_moves):
+        return self.possible_moves(board, op_moves)

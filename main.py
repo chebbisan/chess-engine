@@ -19,7 +19,7 @@ def move_piece(board, pieces):
     actual_move = input()
 
     for piece in pieces:
-        if actual_move in piece.move(board):
+        if actual_move in piece.move(board, op_move):
             board[piece.row][piece.col] = None
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
@@ -124,11 +124,22 @@ for line in table:
 table.close()
 
 turn = 0
+op_move = []
 while game:
     if turn == 0 and move_piece(board, white_pieces):
         turn = 1
+        op_move = []
+        for piece in white_pieces:
+            for move in piece.move(board, op_move):
+                op_move.append(move)
+        print(op_move, '\n\n')
     elif turn == 1 and move_piece(board, black_pieces):
         turn = 0
+        op_move = []
+        for piece in black_pieces:
+            for move in piece.move(board, op_move):
+                op_move.append(move)
+        print(op_move, '\n\n')
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
 
