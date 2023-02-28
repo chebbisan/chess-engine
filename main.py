@@ -15,17 +15,29 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
 
+check = []
+
 def move_piece(board, pieces):
     actual_move = input()
+    move_status = False
+    thr = set()
 
     for piece in pieces:
-        if actual_move in piece.move(board, op_move):
+        if actual_move in piece.move(board):
             board[piece.row][piece.col] = None
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
             board[coordinates[actual_move[-2:]][0]][coordinates[actual_move[-2:]][1]] = piece
-            return True
-    return False
+            piece.move(board)
+            for i in piece.threats:
+                thr.add(i)
+            move_status = True
+            continue
+        for i in piece.threats:
+                thr.add(i)
+    if move_status:
+        return sorted(thr)
+    return move_status
 
 
 # coordinates = {
@@ -123,25 +135,19 @@ for line in table:
     print(line, end='')
 table.close()
 
+threats_ = []
+
 turn = 0
-op_move = []
 while game:
     if turn == 0 and move_piece(board, white_pieces):
         turn = 1
-        op_move = []
-        for piece in white_pieces:
-            for move in piece.move(board, op_move):
-                op_move.append(move)
-        print(op_move, '\n\n')
     elif turn == 1 and move_piece(board, black_pieces):
         turn = 0
-        op_move = []
-        for piece in black_pieces:
-            for move in piece.move(board, op_move):
-                op_move.append(move)
-        print(op_move, '\n\n')
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
+
+
+
 
 
 

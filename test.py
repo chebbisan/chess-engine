@@ -1,4 +1,4 @@
-a = (1, 2)
-ct = [(1, 2), (2, 1)]
-
-print(a in ct)
+a = [[2, 1], [1]]
+b = []
+b.append(a)
+print(sorted(b))
