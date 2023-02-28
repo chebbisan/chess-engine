@@ -17,27 +17,27 @@ board = [[None, None, None, None, None, None, None, None],
 
 check = []
 
-def move_piece(board, pieces):
+def look_threats(board, pieces, thr): # thr - угрозы своего цвета
+    real_threats = set() # вражеские угрозы
+    for piece in pieces:
+        piece.move(board, thr)
+        for real_threat in piece.threats:
+            real_threats.add(real_threat)
+    return sorted(real_threats) # возвращает вражеские угрозы
+
+
+def move_piece(board, pieces, opposite_pieces, thr): 
     actual_move = input()
-    move_status = False
-    thr = set()
+    threat = look_threats(board, opposite_pieces, thr) # считаем угрозы противника учитывая угрозы своего цвета
 
     for piece in pieces:
-        if actual_move in piece.move(board):
+        if actual_move in piece.move(board, threat):
             board[piece.row][piece.col] = None
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
             board[coordinates[actual_move[-2:]][0]][coordinates[actual_move[-2:]][1]] = piece
-            piece.move(board)
-            for i in piece.threats:
-                thr.add(i)
-            move_status = True
-            continue
-        for i in piece.threats:
-                thr.add(i)
-    if move_status:
-        return sorted(thr)
-    return move_status
+            return True 
+    return False
 
 
 # coordinates = {
@@ -135,14 +135,16 @@ for line in table:
     print(line, end='')
 table.close()
 
-threats_ = []
+b = look_threats(board, black_pieces, thr=[]) # свои угрозы, пока не учитывая врага так как до первого хода (белые)
 
 turn = 0
 while game:
-    if turn == 0 and move_piece(board, white_pieces):
+    if turn == 0 and move_piece(board, white_pieces, black_pieces, b): # учитываем угрозы врага
         turn = 1
-    elif turn == 1 and move_piece(board, black_pieces):
+        a = look_threats(board, white_pieces, b)
+    elif turn == 1 and move_piece(board, black_pieces, white_pieces, a):
         turn = 0
+        b = look_threats(board, black_pieces, a)
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
 
@@ -150,4 +152,5 @@ while game:
 
 
 
+# YRAAAAAAAAAAAAAAAAAAAAAA RABOTAET
 
