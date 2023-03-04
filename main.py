@@ -4,7 +4,7 @@
 
 # im bored
 
-from pawn import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
+from figures import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
 
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -139,6 +139,9 @@ b = look_threats(board, black_pieces, thr=[]) # свои угрозы, пока 
 
 turn = 0
 while game:
+    for line in board:
+        print(line)
+    print()
     if turn == 0 and move_piece(board, white_pieces, black_pieces, b): # учитываем угрозы врага
         turn = 1
         a = look_threats(board, white_pieces, b)

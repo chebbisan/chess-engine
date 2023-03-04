@@ -15,97 +15,14 @@ coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0,
     'a2': (6, 0), 'b2': (6, 1), 'c2': (6, 2), 'd2': (6, 3), 'e2': (6, 4), 'f2': (6, 5), 'g2': (6, 6), 'h2': (6, 7),
     'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7)}
 
-class WhitePawn:
-    def __init__(self, position, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = 1 # white
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        moves = []
-
-        if self.row - 1 >= 0 and board[self.row - 1][self.col] == None:
-            moves.append(get_coordinate((self.row - 1, self.col)))
-            if self.row == 6 and board[self.row - 2][self.col] == None and moves:
-                moves.append(get_coordinate((self.row - 2, self.col)))
-        return moves
-
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
-
-    def possible_captures(self, board, imp_moves):
-        captures = []
-        self.threats = []
-
-
-        p_captures = [(-1, -1), (-1, 1)]
-        for p_capture in p_captures:
-            new_row = self.row + p_capture[0]
-            new_col = self.col + p_capture[1]
-            if new_row >= 0 and new_col <= 7 and new_col >= 0:
-                self.threats.append(get_coordinate((new_row, new_col)))
-                if self.has_enemy(board, new_row, new_col): # board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0
-                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
-        return captures
-    
+class Figure:
     def has_enemy(self, board, row, col):
         return board[row][col] is not None and board[row][col].color != self.color
     
-
-
-
-class BlackPawn:
-    def __init__(self, position, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = -1 # black
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        moves = []
-
-        if self.row + 1 <= 7 and board[self.row + 1][self.col] == None:
-            moves.append(get_coordinate((self.row + 1, self.col)))
-            if self.row == 1 and board[self.row + 2][self.col] == None and moves:
-                moves.append(get_coordinate((self.row + 2, self.col)))
-        return moves
-
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
-
-    def possible_captures(self, board, imp_moves):
-        captures = []
-        self.threats = []
-
-        p_captures = [(1, -1), (1, 1)]
-        for p_capture in p_captures:
-            new_row = self.row + p_capture[0]
-            new_col = self.col + p_capture[1]
-            if new_row <= 7 and new_col <= 7 and new_col >= 0:
-                self.threats.append(get_coordinate((new_row, new_col)))
-                if self.has_enemy(board, new_row, new_col):
-                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
-        return captures
+    def in_bounds(self, board, row, col):
+        return row >= 0 and col >= 0 and row <= 7 and col <=7
     
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
-
-
-class Rook:
-    def __init__(self, position, color, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        moves = []
-        self.threats = []
-
+    def check_rook_moves(self, board, moves):
         for i in range(self.col - 1, -1, -1):
             if board[self.row][i] == None:
                 moves.append('R' + get_coordinate((self.row, i)))
@@ -151,25 +68,8 @@ class Rook:
                 self.threats.append(get_coordinate((i, self.col)))
                 break
         return moves
-
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves)
     
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
-
-class Bishop:
-    def __init__(self, position, color, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        moves = []
-        self.threats = []
-
+    def check_bishop_moves(self, board, moves):
         for i in range(1, 8):
             if self.row - i >= 0 and self.col - i >= 0:
                 if board[self.row - i][self.col - i] == None:
@@ -231,55 +131,8 @@ class Bishop:
                 break
         
         return moves
-
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves)
     
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
-
-class Knight:
-    def __init__(self, position, color, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
-        moves = []
-        self.threats = []
-
-        for k_move in k_moves:
-            new_row = self.row + k_move[0]
-            new_col = self.col + k_move[1]
-            if new_row >= 0 and new_col >= 0 and new_row <= 7 and new_col <=7:
-                self.threats.append(get_coordinate((new_row, new_col)))
-                if board[new_row][new_col] == None:
-                    moves.append('N' + get_coordinate((new_row, new_col)))
-                elif self.has_enemy(board, new_row, new_col):
-                    moves.append('Nx' + get_coordinate((new_row, new_col)))
-        return moves
-
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves)
-    
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
-
-class Queen:
-    def __init__(self, position, color, board):
-        self.row = coordinates[position][0]
-        self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
-        board[self.row][self.col] = self
-        self.threats = []
-
-    def possible_moves(self, board, imp_moves):
-        moves = []
-        self.threats = []
-
+    def check_queen_moves(self, board, moves):
         for i in range(1, 8):
             if self.row - i >= 0 and self.col - i >= 0:
                 if board[self.row - i][self.col - i] == None:
@@ -387,13 +240,166 @@ class Queen:
 
         return moves
 
+
+
+class WhitePawn(Figure):
+    def __init__(self, position, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = 1 # white
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        moves = []
+
+        if self.row - 1 >= 0 and board[self.row - 1][self.col] == None:
+            moves.append(get_coordinate((self.row - 1, self.col)))
+            if self.row == 6 and board[self.row - 2][self.col] == None and moves:
+                moves.append(get_coordinate((self.row - 2, self.col)))
+        return moves
+
+    def move(self, board, imp_moves):
+        return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
+
+    def possible_captures(self, board, imp_moves):
+        captures = []
+        self.threats = []
+
+
+        p_captures = [(-1, -1), (-1, 1)]
+        for p_capture in p_captures:
+            new_row = self.row + p_capture[0]
+            new_col = self.col + p_capture[1]
+            if self.in_bounds(board, new_row, new_col):
+                self.threats.append(get_coordinate((new_row, new_col)))
+                if self.has_enemy(board, new_row, new_col): # board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0
+                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+        return captures
+    
+    
+
+class BlackPawn(Figure):
+    def __init__(self, position, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = -1 # black
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        moves = []
+
+        if self.row + 1 <= 7 and board[self.row + 1][self.col] == None:
+            moves.append(get_coordinate((self.row + 1, self.col)))
+            if self.row == 1 and board[self.row + 2][self.col] == None and moves:
+                moves.append(get_coordinate((self.row + 2, self.col)))
+        return moves
+
+    def move(self, board, imp_moves):
+        return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
+
+    def possible_captures(self, board, imp_moves):
+        captures = []
+        self.threats = []
+
+        p_captures = [(1, -1), (1, 1)]
+        for p_capture in p_captures:
+            new_row = self.row + p_capture[0]
+            new_col = self.col + p_capture[1]
+            if self.in_bounds(board, new_row, new_col):
+                self.threats.append(get_coordinate((new_row, new_col)))
+                if self.has_enemy(board, new_row, new_col):
+                    captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+        return captures
+    
+
+
+class Rook(Figure):
+    def __init__(self, position, color, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        moves = []
+        self.threats = []
+
+        return self.check_rook_moves(board, moves)
+
     def move(self, board, imp_moves):
         return self.possible_moves(board, imp_moves)
     
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
 
-class King:
+
+class Bishop(Figure):
+    def __init__(self, position, color, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        moves = []
+        self.threats = []
+
+        return self.check_bishop_moves(board, moves)
+
+    def move(self, board, imp_moves):
+        return self.possible_moves(board, imp_moves)
+    
+
+class Knight(Figure):
+    def __init__(self, position, color, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
+        moves = []
+        self.threats = []
+
+        for k_move in k_moves:
+            new_row = self.row + k_move[0]
+            new_col = self.col + k_move[1]
+            if self.in_bounds(board, new_row, new_col):
+                self.threats.append(get_coordinate((new_row, new_col)))
+                if board[new_row][new_col] == None:
+                    moves.append('N' + get_coordinate((new_row, new_col)))
+                elif self.has_enemy(board, new_row, new_col):
+                    moves.append('Nx' + get_coordinate((new_row, new_col)))
+        return moves
+
+    def move(self, board, imp_moves):
+        return self.possible_moves(board, imp_moves)
+    
+
+class Queen(Figure):
+    def __init__(self, position, color, board):
+        self.row = coordinates[position][0]
+        self.col = coordinates[position][1]
+        self.color = color # 1 - white, -1 - black
+        board[self.row][self.col] = self
+        self.threats = []
+
+    def possible_moves(self, board, imp_moves):
+        moves = []
+        self.threats = []
+
+        return self.check_queen_moves(board, moves)
+
+    def move(self, board, imp_moves):
+        return self.possible_moves(board, imp_moves)
+    
+
+
+class King(Figure):
     def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
@@ -409,20 +415,14 @@ class King:
         for p_move in p_moves:
             new_row = self.row + p_move[0]
             new_col = self.col + p_move[1]
-            if new_row >= 0 and new_col >= 0 and new_row <= 7 and new_col <= 7 and get_coordinate((new_row, new_col)) not in imp_moves:
+            if self.in_bounds(board, new_row, new_col) and get_coordinate((new_row, new_col)) not in imp_moves:
                 self.threats.append(get_coordinate((new_row, new_col)))
                 if board[new_row][new_col] == None:
                     moves.append('K' + get_coordinate((new_row, new_col)))
                 elif self.has_enemy(board, new_row, new_col):
                     moves.append('Kx' + get_coordinate((new_row, new_col)))
         return moves
-    
-
-    
-
 
     def move(self, board, imp_moves):
         return self.possible_moves(board, imp_moves)
     
-    def has_enemy(self, board, row, col):
-        return board[row][col] is not None and board[row][col].color != self.color
