@@ -1,4 +1,2 @@
-a = [[2, 1], [1]]
-b = []
-b.append(a)
-print(sorted(b))
+for i in range(0, 4):
+    print(i)

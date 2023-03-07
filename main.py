@@ -1,8 +1,8 @@
-# version 6 : pseudo-playable version
+# version 7 : first castle variation (not completed)
 # author : cheb
 # chess engine
 
-# im bored
+# quote of the day : "Access denied"
 
 from figures import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
 
@@ -38,17 +38,6 @@ def move_piece(board, pieces, opposite_pieces, thr):
             board[coordinates[actual_move[-2:]][0]][coordinates[actual_move[-2:]][1]] = piece
             return True 
     return False
-
-
-# coordinates = {
-#     'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0, 4), 'f8': (0, 5), 'g8': (0, 6), 'h8': (0, 7),
-#     'a7': (1, 0), 'b7': (1, 1), 'c7': (1, 2), 'd7': (1, 3), 'e7': (1, 4), 'f7': (1, 5), 'g7': (1, 6), 'h7': (1, 7),
-#     'a6': (2, 0), 'b6': (2, 1), 'c6': (2, 2), 'd6': (2, 3), 'e6': (2, 4), 'f6': (2, 5), 'g6': (2, 6), 'h6': (2, 7),
-#     'a5': (3, 0), 'b5': (3, 1), 'c5': (3, 2), 'd5': (3, 3), 'e5': (3, 4), 'f5': (3, 5), 'g5': (3, 6), 'h5': (3, 7),
-#     'a4': (4, 0), 'b4': (4, 1), 'c4': (4, 2), 'd4': (4, 3), 'e4': (4, 4), 'f4': (4, 5), 'g4': (4, 6), 'h4': (4, 7),
-#     'a3': (5, 0), 'b3': (5, 1), 'c3': (5, 2), 'd3': (5, 3), 'e3': (5, 4), 'f3': (5, 5), 'g3': (5, 6), 'h3': (5, 7),
-#     'a2': (6, 0), 'b2': (6, 1), 'c2': (6, 2), 'd2': (6, 3), 'e2': (6, 4), 'f2': (6, 5), 'g2': (6, 6), 'h2': (6, 7),
-#     'a1': (7, 0), 'b1': (7, 1), 'c1': (7, 2), 'd1': (7, 3), 'e1': (7, 4), 'f1': (7, 5), 'g1': (7, 6), 'h1': (7, 7)}
 
     
 # white pawns
@@ -111,23 +100,15 @@ king_b = King('e8', -1, board)
 white_pieces = [a_pawn_w, b_pawn_w, c_pawn_w, d_pawn_w, e_pawn_w, f_pawn_w, g_pawn_w, h_pawn_w, b_knight_w, g_knight_w, c_bishop_w, f_bishop_w,
     a_rook_w, h_rook_w, queen_w, king_w]
 
-
 black_pieces = [a_pawn_b, b_pawn_b, c_pawn_b, d_pawn_b, e_pawn_b, f_pawn_b, g_pawn_b, h_pawn_b, b_knight_b, g_knight_b, c_bishop_b, f_bishop_b,
     a_rook_b, h_rook_b, queen_b, king_b]
 
-white_moves = []
-black_moves = []
-
-# for piece in white_pieces:
-#     for move in piece.move(board):
-#         white_moves.append(move)
-
-# for piece in black_pieces:
-#     for move in piece.move(board):
-#         black_moves.append(move)
 
 cnt = 0
 game = True
+
+rooks = [a_rook_b, h_rook_b, a_rook_w, h_rook_w]
+king_w.can_castle(board, rooks, imp_moves=[])
 
 
 table = open(r'chess_table.txt')
@@ -151,9 +132,4 @@ while game:
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
 
-
-
-
-
-# YRAAAAAAAAAAAAAAAAAAAAAA RABOTAET
 
