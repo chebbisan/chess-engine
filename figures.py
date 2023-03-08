@@ -236,7 +236,7 @@ class WhitePawn(Figure):
     def __init__(self, position, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = 1 # white
+        self.color = 0 # white
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
@@ -249,7 +249,7 @@ class WhitePawn(Figure):
                 moves.append(get_coordinate((self.row - 2, self.col)))
         return moves
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
 
     def possible_captures(self, board, imp_moves):
@@ -261,7 +261,7 @@ class WhitePawn(Figure):
             new_col = self.col + p_capture[1]
             if self.in_bounds(board, new_row, new_col):
                 self.threats.append(get_coordinate((new_row, new_col)))
-                if self.has_enemy(board, new_row, new_col): # board[new_row][new_col] != None and board[new_row][new_col].color * board[self.row][self.col].color < 0
+                if self.has_enemy(board, new_row, new_col):
                     captures.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
         return captures
     
@@ -270,7 +270,7 @@ class BlackPawn(Figure):
     def __init__(self, position, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = -1 # black
+        self.color = 1 # black
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
@@ -283,7 +283,7 @@ class BlackPawn(Figure):
                 moves.append(get_coordinate((self.row + 2, self.col)))
         return moves
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves) + self.possible_captures(board, imp_moves)
 
     def possible_captures(self, board, imp_moves):
@@ -315,7 +315,7 @@ class Rook(Figure):
 
         return self.check_rook_moves(board, moves)
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves)
     
 
@@ -333,7 +333,7 @@ class Bishop(Figure):
         self.threats = []
         return self.check_bishop_moves(board, moves)
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves)
     
 
@@ -361,7 +361,7 @@ class Knight(Figure):
                     moves.append('Nx' + get_coordinate((new_row, new_col)))
         return moves
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves)
     
 
@@ -379,7 +379,7 @@ class Queen(Figure):
         self.threats = []
         return self.check_queen_moves(board, moves)
 
-    def move(self, board, imp_moves):
+    def move(self, board, imp_moves, rooks):
         return self.possible_moves(board, imp_moves)
     
 
@@ -408,16 +408,23 @@ class King(Figure):
         return moves
     
     def can_castle(self, board, rooks, imp_moves):
-        if self.color == -1 and self.move_count == 0:
-            if board[0][0] == rooks[0] and rooks[0].move_count == 0 and self.is_empty(board, rooks[0]):
-                print('black: long (O-O-O)')
-            if board[0][7] == rooks[1] and rooks[1].move_count == 0 and self.is_empty(board, rooks[1]):
-                print('black: short (O-O)')
-        elif self.color == 1 and self.move_count == 0:
-            if board[7][0] == rooks[2] and rooks[2].move_count == 0 and self.is_empty(board, rooks[2]):
-                print('white: long (O-O-O)')
-            if board[7][7] == rooks[3] and rooks[3].move_count == 0 and self.is_empty(board, rooks[3]):
-                print('white: short (O-O)')
+        castle = []
+        if self.color == 1 and self.move_count == 0:
+            if board[0][0] == rooks[1] and rooks[1].move_count == 0 and self.is_empty(board, rooks[1]): # col - 1, col -2
+                if get_coordinate((self.row, self.col - 1)) not in imp_moves and get_coordinate((self.row, self.col - 2)):
+                    castle.append('O-O-O')
+            if board[0][7] == rooks[3] and rooks[3].move_count == 0 and self.is_empty(board, rooks[3]): # col + 1, col + 2
+                if get_coordinate((self.row, self.col + 1)) not in imp_moves and get_coordinate((self.row, self.col + 2)):
+                    castle.append('O-O')
+        elif self.color == 0 and self.move_count == 0:
+            if board[7][0] == rooks[0] and rooks[0].move_count == 0 and self.is_empty(board, rooks[0]):
+                if get_coordinate((self.row, self.col - 1)) not in imp_moves and get_coordinate((self.row, self.col - 2)):
+                    castle.append('O-O-O')
+            if board[7][7] == rooks[2] and rooks[2].move_count == 0 and self.is_empty(board, rooks[2]):
+                if get_coordinate((self.row, self.col + 1)) not in imp_moves and get_coordinate((self.row, self.col + 2)):
+                    castle.append('O-O')
+
+        return castle
 
     
     def is_empty(self, board, rook):
@@ -429,5 +436,5 @@ class King(Figure):
         return empty
 
 
-    def move(self, board, imp_moves):
-        return self.possible_moves(board, imp_moves)    
+    def move(self, board, imp_moves, rooks):
+        return self.possible_moves(board, imp_moves) + self.can_castle(board, rooks, imp_moves)
