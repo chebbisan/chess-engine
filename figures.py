@@ -240,6 +240,7 @@ class WhitePawn(Figure):
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'P'
 
     def possible_moves(self, board, imp_moves):
         moves = []
@@ -274,6 +275,7 @@ class BlackPawn(Figure):
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'p'
 
     def possible_moves(self, board, imp_moves):
         moves = []
@@ -304,10 +306,11 @@ class Rook(Figure):
     def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
+        self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'R' if self.color == 0 else 'r'
 
     def possible_moves(self, board, imp_moves):
         moves = []
@@ -323,10 +326,11 @@ class Bishop(Figure):
     def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
+        self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'B' if self.color == 0 else 'b'
 
     def possible_moves(self, board, imp_moves):
         moves = []
@@ -341,10 +345,11 @@ class Knight(Figure):
     def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
+        self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'N' if self.color == 0 else 'n'
 
     def possible_moves(self, board, imp_moves):
         k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
@@ -369,10 +374,11 @@ class Queen(Figure):
     def __init__(self, position, color, board):
         self.row = coordinates[position][0]
         self.col = coordinates[position][1]
-        self.color = color # 1 - white, -1 - black
+        self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'Q' if self.color == 0 else 'q'
 
     def possible_moves(self, board, imp_moves):
         moves = []
@@ -391,6 +397,7 @@ class King(Figure):
         board[self.row][self.col] = self
         self.threats = []
         self.move_count = 0
+        self.name = 'K' if self.color == 0 else 'k'
 
     def possible_moves(self, board, imp_moves):
         p_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]

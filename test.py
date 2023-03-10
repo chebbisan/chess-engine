@@ -1,2 +1,1 @@
-for i in range(0, 4):
-    print(i)
+print('\033[96mкт будет голубым\033[0m')

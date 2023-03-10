@@ -1,8 +1,8 @@
-# version 7.1 : second castle variation (completed) (playable)
+# version 7.2 : added user-friendly user interface
 # author : cheb
 # chess engine
 
-# quote of the day : "Access granted"
+# quote of the day : "Catch-a-gun! Guh. Never doing that again."
 
 from figures import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
 
@@ -36,6 +36,7 @@ def move_piece(board, pieces, opposite_pieces, thr, rooks):
             if actual_move == 'O-O-O':
                 piece.row = piece.row
                 piece.col = piece.col - 2
+                piece.move_count += 1
                 board[piece.row][piece.col] = piece
                 
                 board[rooks[0 + piece.color].row][rooks[0 + piece.color].col] = None
@@ -46,6 +47,7 @@ def move_piece(board, pieces, opposite_pieces, thr, rooks):
             elif actual_move == 'O-O':
                 piece.row = piece.row
                 piece.col = piece.col + 2
+                piece.move_count += 1
                 board[piece.row][piece.col] = piece
 
                 board[rooks[2 + piece.color].row][rooks[2 + piece.color].col] = None
@@ -55,6 +57,7 @@ def move_piece(board, pieces, opposite_pieces, thr, rooks):
                 return True
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
+            piece.move_count += 1
             board[piece.row][piece.col] = piece
             return True 
     return False
@@ -131,17 +134,23 @@ rooks = [a_rook_w, a_rook_b, h_rook_w, h_rook_b]
 king_w.can_castle(board, rooks, imp_moves=[])
 
 
-table = open(r'chess_table.txt')
-for line in table:
-    print(line, end='')
-table.close()
 thr = []
 b = look_threats(board, black_pieces, thr, rooks) # свои угрозы, пока не учитывая врага так как до первого хода (белые)
 
+
 turn = 0
 while game:
+    print('+---+---+---+---+---+---+---+---+')
     for line in board:
-        print(line)
+        for cell in line:
+            if cell is not None:
+                if ord(cell.name) >= 65 and ord(cell.name) <= 90:
+                    print(f'| \033[33m{cell.name}\033[0m', end=' ')
+                else:
+                    print(f'| \033[32m{cell.name}\033[0m', end=' ')
+            else:
+                print('|  ', end=' ')
+        print('|\n+---+---+---+---+---+---+---+---+')
     print()
     if turn == 0 and move_piece(board, white_pieces, black_pieces, b, rooks): # учитываем угрозы врага
         turn = 1
