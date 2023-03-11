@@ -1,10 +1,10 @@
-# version 7.2 : added user-friendly user interface
+# version 7.3 : replaced White/Black Pawn class with Pawn, omptimized castle
 # author : cheb
 # chess engine
 
-# quote of the day : "Catch-a-gun! Guh. Never doing that again."
+# quote of the day : "Hasta la vista, baby"
 
-from figures import WhitePawn, BlackPawn, Rook, Bishop, Knight, Queen, King, coordinates
+from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates
 
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -17,32 +17,47 @@ board = [[None, None, None, None, None, None, None, None],
 
 check = []
 
-def look_threats(board, pieces, thr, rooks): # thr - угрозы своего цвета
+def look_threats(board, pieces, thr): # thr - угрозы своего цвета
     real_threats = set() # вражеские угрозы
     for piece in pieces:
-        piece.move(board, thr, rooks)
+        piece.move(board, thr)
         for real_threat in piece.threats:
             real_threats.add(real_threat)
     return sorted(real_threats) # возвращает вражеские угрозы
 
 
-def move_piece(board, pieces, opposite_pieces, thr, rooks): 
+def move_piece(board, pieces, opposite_pieces, thr): 
     actual_move = input()
-    threat = look_threats(board, opposite_pieces, thr, rooks) # считаем угрозы противника учитывая угрозы своего цвета
-
+    threat = look_threats(board, opposite_pieces, thr) # считаем угрозы противника учитывая угрозы своего цвета
+    if actual_move[0] == 'Q':
+        piece_type = Queen
+    elif actual_move[0] == 'N':
+        piece_type = Knight
+    elif actual_move[0] == 'B':
+        piece_type = Bishop
+    elif actual_move[0] == 'K' or actual_move[0] == 'O':
+        piece_type = King
+    elif actual_move[0] == 'R':
+        piece_type = Rook
+    else:
+        piece_type = Pawn
+    
     for piece in pieces:
-        if actual_move in piece.move(board, threat, rooks):
+        if not isinstance(piece, piece_type):
+            continue
+        if actual_move in piece.move(board, threat):
             board[piece.row][piece.col] = None
             if actual_move == 'O-O-O':
                 piece.row = piece.row
                 piece.col = piece.col - 2
                 piece.move_count += 1
                 board[piece.row][piece.col] = piece
-                
-                board[rooks[0 + piece.color].row][rooks[0 + piece.color].col] = None
-                rooks[0 + piece.color].row = rooks[0 + piece.color].row
-                rooks[0 + piece.color].col = piece.col + 1
-                board[rooks[0 + piece.color].row][rooks[0 + piece.color].col] = rooks[0 + piece.color]
+
+                rook = board[piece.row][0]
+                board[piece.row][0] = None
+                rook.row = rook.row
+                rook.col = piece.col + 1
+                board[rook.row][rook.col] = rook
                 return True
             elif actual_move == 'O-O':
                 piece.row = piece.row
@@ -50,10 +65,11 @@ def move_piece(board, pieces, opposite_pieces, thr, rooks):
                 piece.move_count += 1
                 board[piece.row][piece.col] = piece
 
-                board[rooks[2 + piece.color].row][rooks[2 + piece.color].col] = None
-                rooks[2 + piece.color].row = rooks[2 + piece.color].row
-                rooks[2 + piece.color].col = piece.col - 1
-                board[rooks[2 + piece.color].row][rooks[2 + piece.color].col] = rooks[2 + piece.color]
+                rook = board[piece.row][7]
+                board[piece.row][7] = None
+                rook.row = rook.row
+                rook.col = piece.col - 1
+                board[rook.row][rook.col] = rook
                 return True
             piece.row = coordinates[actual_move[-2:]][0]
             piece.col = coordinates[actual_move[-2:]][1]
@@ -64,26 +80,26 @@ def move_piece(board, pieces, opposite_pieces, thr, rooks):
 
     
 # white pawns
-a_pawn_w = WhitePawn('a2', board)
-b_pawn_w = WhitePawn('b2', board)
-c_pawn_w = WhitePawn('c2', board)
-d_pawn_w = WhitePawn('d2', board)
-e_pawn_w = WhitePawn('e2', board)
-f_pawn_w = WhitePawn('f2', board)
-g_pawn_w = WhitePawn('g2', board)
-h_pawn_w = WhitePawn('h2', board)
+a_pawn_w = Pawn('a2', 0, board)
+b_pawn_w = Pawn('b2', 0, board)
+c_pawn_w = Pawn('c2', 0, board)
+d_pawn_w = Pawn('d2', 0, board)
+e_pawn_w = Pawn('e2', 0, board)
+f_pawn_w = Pawn('f2', 0, board)
+g_pawn_w = Pawn('g2', 0, board)
+h_pawn_w = Pawn('h2', 0, board)
 
 
 # black pawns
-a_pawn_b = BlackPawn('a7', board)
-b_pawn_b = BlackPawn('b7', board)
-c_pawn_b = BlackPawn('c7', board)
-d_pawn_b = BlackPawn('d7', board)
-e_pawn_b = BlackPawn('e7', board)
-f_pawn_b = BlackPawn('f7', board)
-g_pawn_b = BlackPawn('g7', board)
-h_pawn_b = BlackPawn('h7', board)
-
+a_pawn_b = Pawn('a7', 1, board)
+b_pawn_b = Pawn('b7', 1, board)
+c_pawn_b = Pawn('c7', 1, board)
+d_pawn_b = Pawn('d7', 1, board)
+e_pawn_b = Pawn('e7', 1, board)
+f_pawn_b = Pawn('f7', 1, board)
+g_pawn_b = Pawn('g7', 1, board)
+h_pawn_b = Pawn('h7', 1, board)
+ 
 # white knights
 b_knight_w = Knight('b1', 0, board)
 g_knight_w = Knight('g1', 0, board)
@@ -130,21 +146,20 @@ black_pieces = [a_pawn_b, b_pawn_b, c_pawn_b, d_pawn_b, e_pawn_b, f_pawn_b, g_pa
 cnt = 0
 game = True
 
-rooks = [a_rook_w, a_rook_b, h_rook_w, h_rook_b]
-king_w.can_castle(board, rooks, imp_moves=[])
+king_w.can_castle(board, imp_moves=[])
 
 
 thr = []
-b = look_threats(board, black_pieces, thr, rooks) # свои угрозы, пока не учитывая врага так как до первого хода (белые)
+b = look_threats(board, black_pieces, thr) # свои угрозы, пока не учитывая врага так как до первого хода (белые)
 
-
-turn = 0
+print(isinstance(board[7][4], King))
+turn = False
 while game:
     print('+---+---+---+---+---+---+---+---+')
     for line in board:
         for cell in line:
             if cell is not None:
-                if ord(cell.name) >= 65 and ord(cell.name) <= 90:
+                if cell.color == 0:
                     print(f'| \033[33m{cell.name}\033[0m', end=' ')
                 else:
                     print(f'| \033[32m{cell.name}\033[0m', end=' ')
@@ -152,12 +167,12 @@ while game:
                 print('|  ', end=' ')
         print('|\n+---+---+---+---+---+---+---+---+')
     print()
-    if turn == 0 and move_piece(board, white_pieces, black_pieces, b, rooks): # учитываем угрозы врага
-        turn = 1
-        a = look_threats(board, white_pieces, b, rooks)
-    elif turn == 1 and move_piece(board, black_pieces, white_pieces, a, rooks):
-        turn = 0
-        b = look_threats(board, black_pieces, a, rooks)
+    if turn == False and move_piece(board, white_pieces, black_pieces, b): # учитываем угрозы врага
+        turn = True
+        a = look_threats(board, white_pieces, b)
+    elif turn == True and move_piece(board, black_pieces, white_pieces, a):
+        turn = False
+        b = look_threats(board, black_pieces, a)
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
 
