@@ -242,7 +242,6 @@ class King(Figure):
     
     def under_check(self, imp_moves):
         if get_coordinate((self.row, self.col)) in imp_moves:
-            print('Check!')
             return True
 
 
