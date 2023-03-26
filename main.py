@@ -1,8 +1,8 @@
-# version 7.5 : added checkmate/stalemate
+# version 8 : complete version
 # author : cheb
 # chess engine
 
-# quote of the day : "мы обречены добиваться внимания тех, на кого равняемся"
+# quote of the day : "Дайте мне достаточно кофе и я буду править миром"
 
 import sys
 
@@ -37,6 +37,8 @@ def find_piece(pieces, board, thr, actual_move):
 def safe_move(board, pieces, thr):
     moves = []
     for piece in pieces:
+        if piece.move_count != 0:
+            piece.move_count += 1
         for move in piece.move(board, thr):
             
             new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
@@ -119,10 +121,21 @@ def move_piece(board, pieces, thr):
             
             old_row, old_col = piece.row, piece.col
             new_row, new_col = coordinates[actual_move[-2:]][0], coordinates[actual_move[-2:]][1]
-            if board[new_row][new_col] is not None and board[new_row][new_col].color == 0:
-                white_pieces.remove(board[new_row][new_col])
-            elif board[new_row][new_col] is not None and board[new_row][new_col].color == 1:
-                black_pieces.remove(board[new_row][new_col])
+
+            if 'x' in actual_move:
+                if piece.color == 0:
+                    if board[new_row][new_col] is None:
+                        black_pieces.remove(board[old_row][new_col])
+                        board[old_row][new_col] = None
+                    else:
+                        black_pieces.remove(board[new_row][new_col])
+                else:
+                    if board[new_row][new_col] is None:
+                        white_pieces.remove(board[old_row][new_col])
+                        board[old_row][new_col] = None
+                    else:
+                        white_pieces.remove(board[new_row][new_col])
+
 
             
             piece.row = new_row
@@ -145,6 +158,7 @@ def move_piece(board, pieces, thr):
             #         board[old_row][old_col] = piece
             #         return False
             piece.move_count += 1
+
             
             return True 
         return False
@@ -229,8 +243,7 @@ for line in board:
 cnt = 0
 game = True
 
-thr = []
-b = look_threats(board, black_pieces, thr) # угроза черных на 1 ход
+b = look_threats(board, black_pieces, thr=[]) # угроза черных на 1 ход
 
 turn = False
 while game:

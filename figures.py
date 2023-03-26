@@ -10,6 +10,9 @@ def in_bounds(row, col):
 def empty(board, row, col):
     return board[row][col] is None
 
+def p(board, row, col):
+    return isinstance(board[row][col], Pawn)
+
 coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0, 4), 'f8': (0, 5), 'g8': (0, 6), 'h8': (0, 7),
     'a7': (1, 0), 'b7': (1, 1), 'c7': (1, 2), 'd7': (1, 3), 'e7': (1, 4), 'f7': (1, 5), 'g7': (1, 6), 'h7': (1, 7),
     'a6': (2, 0), 'b6': (2, 1), 'c6': (2, 2), 'd6': (2, 3), 'e6': (2, 4), 'f6': (2, 5), 'g6': (2, 6), 'h6': (2, 7),
@@ -23,8 +26,6 @@ class Figure:
     def has_enemy(self, board, row, col):
         return board[row][col] is not None and board[row][col].color != self.color
     
-    def check(self, board, row, col):
-        return isinstance(board[row][col], King)
 
 
 
@@ -38,11 +39,24 @@ class Pawn(Figure):
         self.move_count = 0
         self.name = 'P'
 
+    def en_passant(self, board):
+        need_row = 3 if self.color == 0 else 4
+        if self.row == need_row:
+            p_captures = [(-1, -1), (-1, 1)] if self.color == 0 else [(1, -1), (1, 1)]
+            for p_capture in p_captures:
+                new_row, new_col = self.row + p_capture[0], self.col + p_capture[1]
+                if in_bounds(new_row, new_col):
+                    if p(board, self.row, new_col) and board[self.row][new_col].move_count == 1 and board[self.row][new_col].color != self.color: # самое просто это ввести новую переменную: количество ходов
+                        return True
+
+
+
     def possible_moves(self, board, imp_moves):
         moves = []
         direction = -1 if self.color == 0 else 1
         p_captures = [(-1, -1), (-1, 1)] if self.color == 0 else [(1, -1), (1, 1)]
         self.threats = []
+        en_passant_row = 3 if self.color == 0 else 4
 
         if in_bounds(self.row + 1 * direction, self.col) and board[self.row + 1 * direction][self.col] is None:
             moves.append(get_coordinate((self.row + 1 * direction, self.col)))
@@ -56,6 +70,9 @@ class Pawn(Figure):
                 self.threats.append(get_coordinate((new_row, new_col)))
                 if self.has_enemy(board, new_row, new_col):
                     moves.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+                if self.row == en_passant_row and p(board, self.row, new_col) and board[self.row][new_col].move_count == 1 and board[self.row][new_col].color != self.color:
+                    moves.append('x'.join([get_coordinate((self.row, self.col))[0], get_coordinate((new_row, new_col))]))
+
         return moves
 
 
