@@ -40,6 +40,9 @@ def safe_move(board, pieces, thr):
         if piece.move_count != 0:
             piece.move_count += 1
         for move in piece.move(board, thr):
+            if move == 'O-O-O' or 'O-O':
+                moves.append(move)
+                continue
             
             new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
             old_row, old_col = piece.row, piece.col
@@ -65,6 +68,7 @@ def safe_move(board, pieces, thr):
                 piece.col = old_col
                 board[new_row][new_col] = cell
                 board[old_row][old_col] = piece
+    print(moves)
     return moves
 
 
