@@ -1,2 +1,4 @@
-a = 'f8'
-print(a[-2:][0])
+a = {'6': 1}
+
+b = input()
+print(a[b])

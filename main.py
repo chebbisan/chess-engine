@@ -17,7 +17,9 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
 
-check = []
+
+
+
 
 def look_threats(board, pieces, thr): # thr - угрозы своего цвета
     real_threats = set() # вражеские угрозы
@@ -33,12 +35,14 @@ def find_piece(pieces, board, thr, actual_move):
             if actual_move == move:
                 actual_piece = piece
                 return actual_piece
+    return None
             
 def safe_move(board, pieces, thr):
     moves = []
     for piece in pieces:
         if piece.move_count != 0:
             piece.move_count += 1
+        # print(piece, piece.move_count)
         for move in piece.move(board, thr):
             if move == 'O-O-O' or 'O-O':
                 moves.append(move)
@@ -60,7 +64,7 @@ def safe_move(board, pieces, thr):
                 piece.col = old_col
                 board[new_row][new_col] = cell
                 board[old_row][old_col] = piece
-            if piece.color == 1:
+            elif piece.color == 1:
                 thre = look_threats(board, white_pieces, thr)
                 if not king_b.under_check(thre):
                     moves.append(move)
@@ -68,7 +72,9 @@ def safe_move(board, pieces, thr):
                 piece.col = old_col
                 board[new_row][new_col] = cell
                 board[old_row][old_col] = piece
-    print(moves)
+
+
+    # print(moves)
     return moves
 
 
@@ -94,7 +100,8 @@ def move_piece(board, pieces, thr):
     if moves:
         actual_move = input()
         piece = find_piece(pieces, board, thr, actual_move)
-    
+        if piece is None:
+            return False
                 
         if actual_move in moves:
             board[piece.row][piece.col] = None
@@ -123,10 +130,10 @@ def move_piece(board, pieces, thr):
                 board[rook.row][rook.col] = rook
                 return True
             
-            old_row, old_col = piece.row, piece.col
+            old_row = piece.row
             new_row, new_col = coordinates[actual_move[-2:]][0], coordinates[actual_move[-2:]][1]
 
-            if 'x' in actual_move:
+            if ':' in actual_move:
                 if piece.color == 0:
                     if board[new_row][new_col] is None:
                         black_pieces.remove(board[old_row][new_col])
