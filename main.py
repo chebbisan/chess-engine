@@ -6,7 +6,7 @@
 
 import sys
 
-from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates
+from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates, get_coordinate
 
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -30,12 +30,29 @@ def look_threats(board, pieces, thr): # thr - угрозы своего цвет
     return sorted(real_threats) # возвращает вражеские угрозы
 
 def find_piece(pieces, board, thr, actual_move):
+    possible_pieces = []
     for piece in pieces:
         for move in piece.move(board, thr):
             if actual_move == move:
-                actual_piece = piece
-                return actual_piece
-    return None
+                possible_pieces.append(piece)
+    if len(possible_pieces) == 1:
+        return possible_pieces[0]
+    
+    not_chosen = True
+    while not_chosen:
+        print('Which piece would you like to move?')
+        p = dict()
+        for i in range(len(possible_pieces)):
+            possible_piece = possible_pieces[i]
+            p[i+1] = possible_piece
+            print(f'{i+1}. {possible_piece.name} on {get_coordinate(possible_piece.row, possible_piece.col)}')
+        answer = input('Choose a number:\n')
+        if answer.isdigit():
+            answer = int(answer)
+            if answer > 0 and answer <= len(possible_pieces):
+                not_chosen = False
+    
+    return p[answer]
             
 def safe_move(board, pieces, thr):
     moves = []
