@@ -1,12 +1,14 @@
-# version 8 : complete version
+# version 9 : incomplete version
 # author : cheb
 # chess engine
 
-# quote of the day : "Дайте мне достаточно кофе и я буду править миром"
+# quote of the day : "Вроде работает"
 
 import sys
 
-from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates, get_coordinate
+from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates, get_coordinate, get_number, get_letter
+
+
 
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -18,6 +20,22 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
 
 
+def find_duplicate_moves(moves, piece_moves, move):
+    first_piece = moves[move]
+    second_piece = piece_moves[move]
+    if first_piece.col == second_piece.col:
+        first_piece_move = move[0] + get_number(first_piece.row) + move[1:]
+        second_piece_move = move[0] + get_number(second_piece.row) + move[1:]
+    else:
+        first_piece_move = move[0] + get_letter(first_piece.col) + move[1:]
+        second_piece_move = move[0] + get_letter(second_piece.col) + move[1:]
+    del moves[move]
+    del piece_moves[move]
+    moves[first_piece_move] = first_piece
+    piece_moves[second_piece_move] = second_piece
+    return True
+
+    
 
 
 
@@ -29,70 +47,66 @@ def look_threats(board, pieces, thr): # thr - угрозы своего цвет
             real_threats.add(real_threat)
     return sorted(real_threats) # возвращает вражеские угрозы
 
-def find_piece(pieces, board, thr, actual_move):
-    possible_pieces = []
-    for piece in pieces:
-        for move in piece.move(board, thr):
-            if actual_move == move:
-                possible_pieces.append(piece)
-    if len(possible_pieces) == 1:
-        return possible_pieces[0]
-    
-    not_chosen = True
-    while not_chosen:
-        print('Which piece would you like to move?')
-        p = dict()
-        for i in range(len(possible_pieces)):
-            possible_piece = possible_pieces[i]
-            p[i+1] = possible_piece
-            print(f'{i+1}. {possible_piece.name} on {get_coordinate(possible_piece.row, possible_piece.col)}')
-        answer = input('Choose a number:\n')
-        if answer.isdigit():
-            answer = int(answer)
-            if answer > 0 and answer <= len(possible_pieces):
-                not_chosen = False
-    
-    return p[answer]
+
             
 def safe_move(board, pieces, thr):
-    moves = []
+    moves = {}
+    moves_ = dict(moves)
     for piece in pieces:
+        piece_moves = piece.move(board, thr)
+        for move in moves_:
+            if move in piece_moves:
+                # print(move, piece.col, moves[move].col)
+                find_duplicate_moves(moves, piece_moves, move)
+                # print(moves, '\n' ,piece_moves)
+        moves = moves | piece_moves
+        moves_ = moves | piece_moves
         if piece.move_count != 0:
-            piece.move_count += 1
-        # print(piece, piece.move_count)
-        for move in piece.move(board, thr):
-            if move == 'O-O-O' or 'O-O':
-                moves.append(move)
-                continue
-            
-            new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
-            old_row, old_col = piece.row, piece.col
-            board[old_row][old_col] = None
-            piece.row = new_row
-            piece.col = new_col
-            cell = board[new_row][new_col]
-            board[new_row][new_col] = piece
+            piece.move_count += 1 
 
-            if piece.color == 0:
-                thre = look_threats(board, black_pieces, thr)
-                if not king_w.under_check(thre):
-                    moves.append(move)
-                piece.row = old_row
-                piece.col = old_col
-                board[new_row][new_col] = cell
-                board[old_row][old_col] = piece
-            elif piece.color == 1:
-                thre = look_threats(board, white_pieces, thr)
-                if not king_b.under_check(thre):
-                    moves.append(move)
-                piece.row = old_row
-                piece.col = old_col
-                board[new_row][new_col] = cell
-                board[old_row][old_col] = piece
+    print(moves)
 
+                
 
-    # print(moves)
+    # for piece in pieces:
+    #     piece_moves = piece.move(board, thr)
+    #     for k in moves:
+    #         if k in piece_moves:                    # ДОДЕЕЛЛЛЛЛЛЛЛЛЛААААААААААТь
+    #             moves = find_duplicate_moves(moves, piece_moves, k)
+    #         else:
+    #             moves = moves | piece_moves
+
+    for move in moves:
+        if move == 'O-O-O' or move == 'O-O':
+            continue
+        piece = moves[move]
+        new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+        old_row, old_col = piece.row, piece.col
+        board[old_row][old_col] = None
+        piece.row = new_row
+        piece.col = new_col
+        cell = board[new_row][new_col]
+        board[new_row][new_col] = piece
+
+        if piece.color == 0:
+            thre = look_threats(board, black_pieces, thr)
+            if king_w.under_check(thre):
+                del moves[move]
+            piece.row = old_row
+            piece.col = old_col
+            board[new_row][new_col] = cell
+            board[old_row][old_col] = piece
+
+        elif piece.color == 1:
+            thre = look_threats(board, white_pieces, thr)
+            if king_b.under_check(thre):
+                del moves[move]
+            piece.row = old_row
+            piece.col = old_col
+            board[new_row][new_col] = cell
+            board[old_row][old_col] = piece
     return moves
+
 
 
 def move_piece(board, pieces, thr):
@@ -116,11 +130,9 @@ def move_piece(board, pieces, thr):
     
     if moves:
         actual_move = input()
-        piece = find_piece(pieces, board, thr, actual_move)
-        if piece is None:
-            return False
                 
         if actual_move in moves:
+            piece = moves[actual_move]
             board[piece.row][piece.col] = None
             if actual_move == 'O-O-O':
                 piece.row = piece.row
@@ -150,7 +162,7 @@ def move_piece(board, pieces, thr):
             old_row = piece.row
             new_row, new_col = coordinates[actual_move[-2:]][0], coordinates[actual_move[-2:]][1]
 
-            if ':' in actual_move:
+            if 'x' in actual_move:
                 if piece.color == 0:
                     if board[new_row][new_col] is None:
                         black_pieces.remove(board[old_row][new_col])
@@ -169,22 +181,6 @@ def move_piece(board, pieces, thr):
             piece.row = new_row
             piece.col = new_col
             board[new_row][new_col] = piece
-            # if piece.color == 0:
-            #     thre = look_threats(board, black_pieces, thr)
-            #     if king_w.under_check(thre):
-            #         piece.row = old_row
-            #         piece.col = old_col
-            #         board[new_row][new_col] = None
-            #         board[old_row][old_col] = piece
-            #         return False
-            # elif piece.color == 1:
-            #     thre = look_threats(board, white_pieces, thr)
-            #     if king_b.under_check(thre):
-            #         piece.row = old_row
-            #         piece.col = old_col
-            #         board[new_row][new_col] = None
-            #         board[old_row][old_col] = piece
-            #         return False
             piece.move_count += 1
 
             
