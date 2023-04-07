@@ -47,16 +47,20 @@ class Pawn(Figure):
         self.name = 'P'
 
     def possible_moves(self, board, imp_moves):
-        p = get_coordinate(self.row, self.col)
         dict_moves = {}
         direction = -1 if self.color == 0 else 1
         p_captures = [(-1, -1), (-1, 1)] if self.color == 0 else [(1, -1), (1, 1)]
         self.threats = []
         en_passant_row = 3 if self.color == 0 else 4
+        promote_row = 1 if self.color == 0 else 6
 
         if in_bounds(self.row + 1 * direction, self.col) and board[self.row + 1 * direction][self.col] is None:
-            dict_moves[get_coordinate(self.row + 1 * direction, self.col)] = self
-            if self.move_count == 0 and in_bounds(self.row + 2 * direction, self.col) and board[self.row + 2 * direction][self.col] is None:
+            if promote_row == self.row:
+                for letter in ['Q', 'N', 'R', 'B']:
+                    dict_moves[get_coordinate(self.row + 1 * direction, self.col) + '=' + letter] = self
+            else:
+                dict_moves[get_coordinate(self.row + 1 * direction, self.col)] = self
+            if self.move_count == 0 and in_bounds(self.row + 2 * direction, self.col) and board[self.row + 2 * direction][self.col] is None and (self.row == 1 or self.row == 6):
                 dict_moves[get_coordinate(self.row + 2 * direction, self.col)] = self
 
         for p_capture in p_captures:
@@ -69,7 +73,6 @@ class Pawn(Figure):
                 if self.row == en_passant_row and is_pawn(board, self.row, new_col) and board[self.row][new_col].move_count == 1 and board[self.row][new_col].color != self.color:
                     dict_moves['x'.join([get_coordinate(self.row, self.col)[0], get_coordinate(new_row, new_col)])] = self
 
-        # return moves
         return dict_moves
 
 
