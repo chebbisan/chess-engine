@@ -5,11 +5,21 @@
 # quote of the day : "Сломал палец на ноге...("
 
 import sys
+import enum
 
 from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates, get_coordinate, get_number, get_letter, Figure
 
 
+class Color(enum.IntEnum):
+    WHITE = 0
+    BLACK = 1
 
+
+def opposing_color(color: Color) -> Color:
+    return Color.BLACK if color == Color.WHITE else Color.WHITE
+
+
+TURN_COUNTER = 0
 board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
@@ -20,50 +30,46 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
 
 
-def find_duplicate_moves(moves, piece_moves, move):
-    first_piece = moves[move]
-    second_piece = piece_moves[move]
+def specify_dual_figure_moves(first_piece_moves, second_piece_moves, move):
+    # Если две фигуры могут сделать одно и тоже движение - надо указать ряд или колонку
+    # Эта функция переделает возможные ходы для таких фигур
+    first_piece = first_piece_moves[move]
+    second_piece = second_piece_moves[move]
     if first_piece.col == second_piece.col:
         first_piece_move = move[0] + get_number(first_piece.row) + move[1:]
         second_piece_move = move[0] + get_number(second_piece.row) + move[1:]
     else:
         first_piece_move = move[0] + get_letter(first_piece.col) + move[1:]
         second_piece_move = move[0] + get_letter(second_piece.col) + move[1:]
-    del moves[move]
-    del piece_moves[move]
-    moves[first_piece_move] = first_piece
-    piece_moves[second_piece_move] = second_piece
+    del first_piece_moves[move]
+    del second_piece_moves[move]
+    first_piece_moves[first_piece_move] = first_piece
+    second_piece_moves[second_piece_move] = second_piece
     return True
 
-    
 
-
-
-def look_threats(board, pieces, thr): # thr - угрозы своего цвета
+def collect_threats(board, enemy_pieces, my_threats, current_turn): # my_threats - угрозы своего цвета
     real_threats = set() # вражеские угрозы
-    for piece in pieces:
-        piece.move(board, thr)
+    for piece in enemy_pieces:
+        piece.possible_moves(board, my_threats, current_turn)
         for real_threat in piece.threats:
             real_threats.add(real_threat)
     return sorted(real_threats) # возвращает вражеские угрозы
 
 
             
-def safe_move(board, pieces, thr):
+def safe_move(board, pieces, thr, current_turn):
+    # Эта функция убирает ходы, которые позволяют съесть короля
     moves = {}
-    moves_ = dict(moves)
     for piece in pieces:
-        piece_moves = piece.move(board, thr)
-        for move in moves_:
-            if move in piece_moves and moves_[move] is not piece:
+        piece_moves = piece.possible_moves(board, thr, current_turn)
+        for move in moves.copy():
+            if move in piece_moves and moves[move] is not piece:
                 # print(move, piece.col, moves[move].col)
-                find_duplicate_moves(moves, piece_moves, move)
+                specify_dual_figure_moves(moves, piece_moves, move)
                 # print(moves, '\n' ,piece_moves)
         moves = moves | piece_moves
-        moves_ = moves | piece_moves
-        if piece.move_count != 0:
-            piece.move_count += 1 
-    for move in moves_:
+    for move in moves:
         if move == 'O-O-O' or move == 'O-O':
             continue
         piece = moves[move]
@@ -90,36 +96,25 @@ def safe_move(board, pieces, thr):
         board[old_row][old_col] = None
         piece.row = new_row
         piece.col = new_col
+        piece.move_count += 1
+        current_turn += 1  # Virtual turn
 
         board[new_row][new_col] = piece
 
-        if piece.color == 0:
-            if isinstance(cell, Figure):
-                black_pieces.remove(cell)
-                thre = look_threats(board, black_pieces, thr)
-                black_pieces.append(cell)
-            else:
-                thre = look_threats(board, black_pieces, thr)
-            if king_w.under_check(thre):
-                del moves[move]
-            piece.row = old_row
-            piece.col = old_col
-            board[new_row][new_col] = cell
-            board[old_row][old_col] = piece
-
-        elif piece.color == 1:
-            if isinstance(cell, Figure):
-                white_pieces.remove(cell)
-                thre = look_threats(board, white_pieces, thr)
-                white_pieces.append(cell)
-            else:
-                thre = look_threats(board, white_pieces, thr)
-            if king_b.under_check(thre):
-                del moves[move]
-            piece.row = old_row
-            piece.col = old_col
-            board[new_row][new_col] = cell
-            board[old_row][old_col] = piece
+        if isinstance(cell, Figure):
+            GAME_PIECES[opposing_color(piece.color)].remove(cell)
+            thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
+            GAME_PIECES[opposing_color(piece.color)].append(cell)
+        else:
+            thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
+        if kings[piece.color].under_check(thre):
+            del moves[move]
+        piece.row = old_row
+        piece.col = old_col
+        board[new_row][new_col] = cell
+        board[old_row][old_col] = piece
+        piece.move_count -= 1
+        current_turn -= 1
         if '=' in move:
             pieces.remove(piece)
             del piece
@@ -132,26 +127,12 @@ def safe_move(board, pieces, thr):
 
 
 
-def move_piece(board, pieces, thr):
-    
-    # threat = look_threats(board, opposite_pieces, thr) # считаем угрозы противника учитывая угрозы своего цвета
-    # if actual_move[0] == 'Q':
-    #     piece_type = Queen
-    # elif actual_move[0] == 'N':
-    #     piece_type = Knight
-    # elif actual_move[0] == 'B':
-    #     piece_type = Bishop
-    # elif actual_move[0] == 'K' or actual_move[0] == 'O':
-    #     piece_type = King
-    # elif actual_move[0] == 'R':
-    #     piece_type = Rook
-    # else:
-    #     piece_type = Pawn
+def move_piece(board, pieces, thr, current_turn):
+    # эта функция двигает фигуру, если был введен правильный ход и возвращает True
+    # если ход введен неверно, то функция вернет False
 
-    # print(thr)
-    moves = safe_move(board, pieces, thr)
-    print(moves)
-    if moves:
+    moves = safe_move(board, pieces, thr, current_turn)
+    if moves: # если ходов нет, то программа заканчивает работу
         actual_move = input()
                 
         if actual_move in moves:
@@ -161,6 +142,7 @@ def move_piece(board, pieces, thr):
                 piece.row = piece.row
                 piece.col = piece.col - 2
                 piece.move_count += 1
+                piece.last_move = current_turn
                 board[piece.row][piece.col] = piece
 
                 rook = board[piece.row][0]
@@ -173,6 +155,7 @@ def move_piece(board, pieces, thr):
                 piece.row = piece.row
                 piece.col = piece.col + 2
                 piece.move_count += 1
+                piece.last_move = current_turn
                 board[piece.row][piece.col] = piece
 
                 rook = board[piece.row][7]
@@ -201,10 +184,15 @@ def move_piece(board, pieces, thr):
 
             if 'x' in actual_move:
                 if board[new_row][new_col] is None:
-                    pieces.remove(board[old_row][new_col])
+                    print(f"Try to remove at {get_coordinate(old_row, new_col)}")
+                    print(f'Pieces: {pieces}\npiece: {board[old_row][new_col]}')
+                    print(f'Our color: {piece.color}')
+                    print(f'To delete color: {board[old_row][new_col].color}')
+                    print(f'Piece from pieces: {pieces[0].color}')
+                    GAME_PIECES[board[old_row][new_col].color].remove(board[old_row][new_col])
                     board[old_row][new_col] = None
                 else:
-                    pieces.remove(board[new_row][new_col])
+                    GAME_PIECES[board[new_row][new_col].color].remove(board[new_row][new_col])
 
 
             
@@ -212,6 +200,7 @@ def move_piece(board, pieces, thr):
             piece.col = new_col
             board[new_row][new_col] = piece
             piece.move_count += 1
+            piece.last_move = current_turn
 
             return True 
         return False
@@ -221,74 +210,70 @@ def move_piece(board, pieces, thr):
         
 
     
-# # white pawns
-# a_pawn_w = Pawn('a2', 0, board)
-# b_pawn_w = Pawn('b2', 0, board)
-# c_pawn_w = Pawn('c2', 0, board)
-# d_pawn_w = Pawn('d2', 0, board)
-e_pawn_w = Pawn('e7', 0, board)
-# f_pawn_w = Pawn('f2', 0, board)
-# g_pawn_w = Pawn('g2', 0, board)
-# h_pawn_w = Pawn('h2', 0, board)
+# white pawns
+a_pawn_w = Pawn('a2', 0, board)
+b_pawn_w = Pawn('b2', 0, board)
+c_pawn_w = Pawn('c2', 0, board)
+d_pawn_w = Pawn('d2', 0, board)
+e_pawn_w = Pawn('e2', 0, board)
+f_pawn_w = Pawn('f2', 0, board)
+g_pawn_w = Pawn('g2', 0, board)
+h_pawn_w = Pawn('h2', 0, board)
 
 
-# # black pawns
-# a_pawn_b = Pawn('a7', 1, board)
-# b_pawn_b = Pawn('b7', 1, board)
-# c_pawn_b = Pawn('c7', 1, board)
-# d_pawn_b = Pawn('d7', 1, board)
-# e_pawn_b = Pawn('e7', 1, board)
-# f_pawn_b = Pawn('f7', 1, board)
-# g_pawn_b = Pawn('g7', 1, board)
-# h_pawn_b = Pawn('h7', 1, board)
+# black pawns
+a_pawn_b = Pawn('a7', 1, board)
+b_pawn_b = Pawn('b7', 1, board)
+c_pawn_b = Pawn('c7', 1, board)
+d_pawn_b = Pawn('d7', 1, board)
+e_pawn_b = Pawn('e7', 1, board)
+f_pawn_b = Pawn('f7', 1, board)
+g_pawn_b = Pawn('g7', 1, board)
+h_pawn_b = Pawn('h7', 1, board)
  
-# # white knights
-# b_knight_w = Knight('b1', 0, board)
-# g_knight_w = Knight('g1', 0, board)
+# white knights
+b_knight_w = Knight('b1', 0, board)
+g_knight_w = Knight('g1', 0, board)
 
-# # black knights
-# b_knight_b = Knight('b8', 1, board)
-# g_knight_b = Knight('g8', 1, board)
+# black knights
+b_knight_b = Knight('b8', 1, board)
+g_knight_b = Knight('g8', 1, board)
 
-# # white bishops 
-# c_bishop_w = Bishop('c1', 0, board)
-# f_bishop_w = Bishop('f1', 0, board)
+# white bishops 
+c_bishop_w = Bishop('c1', 0, board)
+f_bishop_w = Bishop('f1', 0, board)
 
-# # black bishops
-# c_bishop_b = Bishop('c8', 1, board)
-# f_bishop_b = Bishop('f8', 1, board)
+# black bishops
+c_bishop_b = Bishop('c8', 1, board)
+f_bishop_b = Bishop('f8', 1, board)
 
-# # # white rooks
-# a_rook_w = Rook('a1', 0, board)
-# h_rook_w = Rook('h1', 0, board)
+# # white rooks
+a_rook_w = Rook('a1', 0, board)
+h_rook_w = Rook('h1', 0, board)
 
-# # black rooks
-# a_rook_b = Rook('a8', 1, board)
-# h_rook_b = Rook('h8', 1, board)
+# black rooks
+a_rook_b = Rook('a8', 1, board)
+h_rook_b = Rook('h8', 1, board)
 
-# # white queen
-# queen_w = Queen('d1', 0, board)
+# white queen
+queen_w = Queen('d1', 0, board)
 
-# # black queen 
-# queen_b = Queen('d8', 1, board)
+# black queen 
+queen_b = Queen('d8', 1, board)
 
 # white king
-king_w = King('h1', 0, board)
+king_w = King('e1', 0, board)
 
 # black king 
-king_b = King('h8', 1, board)
+king_b = King('e8', 1, board)
 
-
-white_pieces = []
-black_pieces = []
+GAME_PIECES = {Color.WHITE: [], Color.BLACK: []}
+kings = {Color.WHITE: king_w, Color.BLACK: king_b}
 
 for line in board:
     for cell in line:
         if cell is not None:
-            if cell.color == 0:
-                white_pieces.append(cell)
-            else:
-                black_pieces.append(cell)
+            GAME_PIECES[cell.color].append(cell)
 
 
 
@@ -296,7 +281,7 @@ for line in board:
 cnt = 0
 game = True
 
-b = look_threats(board, black_pieces, thr=[]) # угроза черных на 1 ход
+black_threats = collect_threats(board, GAME_PIECES[Color.BLACK], my_threats=[], current_turn=TURN_COUNTER) # угроза черных на 1 ход
 
 turn = False
 while game:
@@ -312,13 +297,14 @@ while game:
                 print('|  ', end=' ')
         print('|\n+---+---+---+---+---+---+---+---+')
     print()
-    if turn == False and move_piece(board, white_pieces, b): # учитываем угрозы врага
+    if turn == False and move_piece(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER):
         turn = True
-        a = look_threats(board, white_pieces, b)
-    elif turn == True and move_piece(board, black_pieces, a):
+        white_threats = collect_threats(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER)
+    elif turn == True and move_piece(board, GAME_PIECES[Color.BLACK], white_threats, TURN_COUNTER):
         turn = False
-        b = look_threats(board, black_pieces, a)
+        black_threats = collect_threats(board, GAME_PIECES[Color.BLACK], white_threats, TURN_COUNTER)
     else:
         print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
+    TURN_COUNTER += 1
 
 
