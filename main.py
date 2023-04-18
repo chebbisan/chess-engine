@@ -18,6 +18,111 @@ class Color(enum.IntEnum):
 def opposing_color(color: Color) -> Color:
     return Color.BLACK if color == Color.WHITE else Color.WHITE
 
+def MakeMove(move, moves, current_turn):
+    piece = moves[move]
+    board[piece.row][piece.col] = None
+    new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+    cell = None
+
+    if move == 'O-O-O':
+        new_row, new_col = piece.row, piece.col - 2
+        rook = board[piece.row][0]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, new_col + 1
+        board[rook.row][rook.col] = rook
+    elif move == 'O-O':
+        new_row, new_col = piece.row, piece.col + 2
+        rook = board[piece.row][7]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, new_col - 1
+        board[rook.row][rook.col] = rook
+    elif 'x' in move:
+        if board[new_row][new_col] is None:
+            GAME_PIECES[opposing_color(piece.color)].remove(board[piece.row][new_col])
+            cell = board[piece.row][new_col]
+            board[piece.row][new_col] = None
+        else:
+            GAME_PIECES[opposing_color(piece.color)].remove(board[new_row][new_col])
+            cell = board[new_row][new_col]
+    elif '=' in move:
+        new_row, new_col = coordinates[move[2:-2]][0], coordinates[move[2:-2]][1]
+        promote_to = move[-1]
+        GAME_PIECES[piece.color].remove(piece)
+        if promote_to == 'Q':
+            piece = Queen(move[2:-2], piece.color, board)
+        elif promote_to == 'R':
+            piece = Rook(move[2:-2], piece.color, board)
+        elif promote_to == 'B':
+            piece = Bishop(move[2:-2], piece.color, board)
+        elif promote_to == 'N':
+            piece = Knight(move[2:-2], piece.color, board)
+        GAME_PIECES[piece.color].append(piece)
+
+
+    piece.move_count += 1
+    board[new_row][new_col] = piece
+    piece.row, piece.col = new_row, new_col
+    last_move = piece.last_move
+    piece.last_move = current_turn
+    
+    return [cell, last_move]
+
+def UnmakeMove(move, moves, something):
+    piece = moves[move]
+    board[piece.row][piece.col] = None
+
+    if 'R' in move or 'N' in move or 'K' in move or 'B' in move or 'Q' in move:
+        old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+    else:
+        old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+
+    if move == 'O-O-O':
+        old_row, old_col = piece.row, piece.col + 2
+        rook = board[piece.row][piece.col + 1]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, 0
+        board[rook.row][rook.col] = rook
+    elif move == 'O-O':
+        old_row, old_col = piece.row, piece.col - 2
+        rook = board[piece.row][7]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, 7
+        board[rook.row][rook.col] = rook
+    elif 'x' in move:
+        GAME_PIECES[opposing_color(piece.color)].append(something[0])
+        board[something[0].row][something[0].col] = something[0]
+    elif '=' in move:
+        
+        old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+        GAME_PIECES[piece.color].remove(piece)
+        piece = Pawn(move[:2], piece.color, board)
+        piece.move_count = 6
+        GAME_PIECES[piece.color].append(piece)
+    
+    piece.move_count -= 1
+    board[old_row][old_col] = piece
+    piece.row, piece.col = old_row, old_col
+    piece.last_move = something[1]
+    
+    return True
+
+
+
+def CountPossiblePositions(depth, current_turn, thr, pieces):
+    if depth == 0:
+        return 1
+    moves = safe_move(board, pieces, thr, current_turn)
+    numPositions = 0
+    for move in moves:
+        something = MakeMove(move, moves, current_turn)
+        thr = collect_threats(board, GAME_PIECES[opposing_color(pieces[0])], thr, current_turn)
+        print_board(board)
+        
+        
+        numPositions += CountPossiblePositions(depth - 1, current_turn + 1, thr, GAME_PIECES[opposing_color(pieces[0])])
+        UnmakeMove(move, moves, something)
+    return numPositions
+
 
 TURN_COUNTER = 0
 board = [[None, None, None, None, None, None, None, None],
@@ -28,6 +133,25 @@ board = [[None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None],
         [None, None, None, None, None, None, None, None]]
+
+def MoveGenerationTest(depth, pieces, thr, current_turn):
+    if depth == 0:
+        return 1
+    
+    moves = safe_move(board, pieces, thr, current_turn)
+    numPositions = 0
+
+    for move in moves:
+        s = auto_move_piece(board, pieces, moves, current_turn, move)
+        thr = collect_threats(board, GAME_PIECES[opposing_color(pieces[0].color)], thr, current_turn)
+        numPositions += MoveGenerationTest(depth - 1, GAME_PIECES[opposing_color(pieces[0].color)], thr, current_turn)
+        unmakeMove(board, move, s[0], s[1], s[2], s[3], pieces, s[4], current_turn, moves, s[5])
+    
+    return numPositions
+    
+    
+    
+        
 
 
 def specify_dual_figure_moves(first_piece_moves, second_piece_moves, move):
@@ -63,13 +187,14 @@ def safe_move(board, pieces, thr, current_turn):
     moves = {}
     for piece in pieces:
         piece_moves = piece.possible_moves(board, thr, current_turn)
-        for move in moves.copy():
-            if move in piece_moves and moves[move] is not piece:
-                # print(move, piece.col, moves[move].col)
-                specify_dual_figure_moves(moves, piece_moves, move)
-                # print(moves, '\n' ,piece_moves)
+        # for move in moves.copy():
+        #     if move in piece_moves and moves[move] is not piece:
+        #         # print(move, piece.col, moves[move].col)
+        #         specify_dual_figure_moves(moves, piece_moves, move)
+        #         # print(moves, '\n' ,piece_moves)
         moves = moves | piece_moves
-    for move in moves:
+    for move in moves.copy():
+    
         if move == 'O-O-O' or move == 'O-O':
             continue
         piece = moves[move]
@@ -101,14 +226,17 @@ def safe_move(board, pieces, thr, current_turn):
 
         board[new_row][new_col] = piece
 
-        if isinstance(cell, Figure):
-            GAME_PIECES[opposing_color(piece.color)].remove(cell)
-            thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
-            GAME_PIECES[opposing_color(piece.color)].append(cell)
-        else:
-            thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
+        if 'x' in move and board[new_row][new_col] is None:
+            if board[new_row][new_col] is None:
+                cell = board[old_row][new_col]
+                GAME_PIECES[opposing_color(piece.color)].remove(cell)
+                new_row = old_row
+            else:
+                GAME_PIECES[opposing_color(piece.color)].remove(cell)
+        thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
         if kings[piece.color].under_check(thre):
             del moves[move]
+# возвращаем все не место
         piece.row = old_row
         piece.col = old_col
         board[new_row][new_col] = cell
@@ -123,9 +251,97 @@ def safe_move(board, pieces, thr, current_turn):
             return_piece.col = old_col
             board[new_row][new_col] = cell
             board[old_row][old_col] = return_piece
+        if 'x' in move and cell is not None:
+            GAME_PIECES[opposing_color(piece.color)].append(cell)
     return moves
+                
+def auto_move_piece(board, pieces, moves, current_turn, move):
+    return_piece = None
+    piece = moves[move]
+    if move == 'O-O-O':
+        piece.row = piece.row
+        piece.col = piece.col - 2
+        piece.move_count += 1
+        piece.last_move = current_turn
+        board[piece.row][piece.col] = piece
+        rook = board[piece.row][0]
+        board[piece.row][0] = None
+        rook.row = rook.row
+        rook.col = piece.col + 1
+        board[rook.row][rook.col] = rook
+        
+    elif move == 'O-O':
+        piece.row = piece.row
+        piece.col = piece.col + 2
+        piece.move_count += 1
+        piece.last_move = current_turn
+        board[piece.row][piece.col] = piece
+        rook = board[piece.row][7]
+        board[piece.row][7] = None
+        rook.row = rook.row
+        rook.col = piece.col - 1
+        board[rook.row][rook.col] = rook
+    
+    
+    if '=' in move:
+        new_row, new_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+        promote_to = move[-1]
+        return_piece = piece
+        pieces.remove(piece)
+        if promote_to == 'Q':
+            piece = Queen(move[:2], piece.color, board)
+        elif promote_to == 'R':
+            piece = Rook(move[:2], piece.color, board)
+        elif promote_to == 'B':
+            piece = Bishop(move[:2], piece.color, board)
+        elif promote_to == 'N':
+            piece = Knight(move[:2], piece.color, board)
+        pieces.append(piece)
+        old_row, old_col = return_piece.row, return_piece.col
+        cell = None
+    else:
+        new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+        old_row, old_col = piece.row, piece.col
+        cell = board[new_row][new_col] ####
+    board[old_row][old_col] = None
+    piece.row = new_row
+    piece.col = new_col
+    piece.move_count += 1
+    current_turn += 1  # Virtual turn
+    board[new_row][new_col] = piece
+    if 'x' in move and board[new_row][new_col] is None:
+        if board[new_row][new_col] is None:
+            cell = board[old_row][new_col]
+            GAME_PIECES[opposing_color(piece.color)].remove(cell)
+            new_row = old_row
+        else:
+            GAME_PIECES[opposing_color(piece.color)].remove(cell)
+
+    return [old_row, old_col, new_row, new_col, return_piece, cell]
+
+def unmakeMove(board, move, old_row, old_col, new_row, new_col, pieces, return_piece, current_turn, moves, cell):
+    piece = moves[move]
+    piece.row = old_row
+    piece.col = old_col
+    board[new_row][new_col] = cell
+    board[old_row][old_col] = piece
+    piece.move_count -= 1
+    current_turn -= 1
+    if '=' in move:
+        pieces.remove(piece)
+        del piece
+        pieces.append(return_piece)
+        return_piece.row = old_row
+        return_piece.col = old_col
+        board[new_row][new_col] = cell
+        board[old_row][old_col] = return_piece
+    if 'x' in move and cell is not None:
+        GAME_PIECES[opposing_color(piece.color)].append(cell)
+    
+    
 
 
+    
 
 def move_piece(board, pieces, thr, current_turn):
     # эта функция двигает фигуру, если был введен правильный ход и возвращает True
@@ -184,18 +400,12 @@ def move_piece(board, pieces, thr, current_turn):
 
             if 'x' in actual_move:
                 if board[new_row][new_col] is None:
-                    print(f"Try to remove at {get_coordinate(old_row, new_col)}")
-                    print(f'Pieces: {pieces}\npiece: {board[old_row][new_col]}')
-                    print(f'Our color: {piece.color}')
-                    print(f'To delete color: {board[old_row][new_col].color}')
-                    print(f'Piece from pieces: {pieces[0].color}')
                     GAME_PIECES[board[old_row][new_col].color].remove(board[old_row][new_col])
                     board[old_row][new_col] = None
                 else:
                     GAME_PIECES[board[new_row][new_col].color].remove(board[new_row][new_col])
 
 
-            
             piece.row = new_row
             piece.col = new_col
             board[new_row][new_col] = piece
@@ -276,7 +486,20 @@ for line in board:
             GAME_PIECES[cell.color].append(cell)
 
 
-
+def print_board(board):
+    
+    print('+----+----+----+----+----+----+----+----+')
+    for line in board:
+        for cell in line:
+            if cell is not None:
+                if cell.color == 0:
+                    print(f'| \033[33m{cell.name}\033[0m ', end=' ')
+                else:
+                    print(f'| \033[32m{cell.name}\033[0m ', end=' ')
+            else:
+                print('|   ', end=' ')
+        print('|\n+----+----+----+----+----+----+----+----+')
+    print()
 
 cnt = 0
 game = True
@@ -284,18 +507,21 @@ game = True
 black_threats = collect_threats(board, GAME_PIECES[Color.BLACK], my_threats=[], current_turn=TURN_COUNTER) # угроза черных на 1 ход
 
 turn = False
+
+print(CountPossiblePositions(2, TURN_COUNTER, black_threats, GAME_PIECES[Color.WHITE]))
+sys.exit()
 while game:
-    print('+---+---+---+---+---+---+---+---+')
+    print('+----+----+----+----+----+----+----+----+')
     for line in board:
         for cell in line:
             if cell is not None:
                 if cell.color == 0:
-                    print(f'| \033[33m{cell.name}\033[0m', end=' ')
+                    print(f'| \033[33m{cell.name}\033[0m ', end=' ')
                 else:
-                    print(f'| \033[32m{cell.name}\033[0m', end=' ')
+                    print(f'| \033[32m{cell.name}\033[0m ', end=' ')
             else:
-                print('|  ', end=' ')
-        print('|\n+---+---+---+---+---+---+---+---+')
+                print('|   ', end=' ')
+        print('|\n+----+----+----+----+----+----+----+----+')
     print()
     if turn == False and move_piece(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER):
         turn = True
