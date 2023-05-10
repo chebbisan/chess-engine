@@ -18,9 +18,8 @@ class Color(enum.IntEnum):
 def opposing_color(color: Color) -> Color:
     return Color.BLACK if color == Color.WHITE else Color.WHITE
 
-def MakeMove(move, moves, current_turn):
+def MakeMove(move, moves, current_turn): # додлеать рокуировак
     piece = moves[move]
-    print_board(board)
     board[piece.row][piece.col] = None
     
     cell = None
@@ -40,14 +39,14 @@ def MakeMove(move, moves, current_turn):
     elif 'x' in move:
         new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
         if board[new_row][new_col] is None:
-            cell = board[piece.row][new_col]
+            cell = board[piece.row][new_col]  # для взятия на проходе
             
             board[piece.row][new_col] = None
         else:
             cell = board[new_row][new_col]
-        print(cell.color, piece.color)
-        print(move)
-        GAME_PIECES[opposing_color(piece.color)].remove(cell)
+        # print(cell.color, piece.color)
+        # print(move)
+        GAME_PIECES[opposing_color(piece.color)].remove(cell) # если это убрать, то будут появляться лишние фигуры в GAME_PIECES[]
 
 
     elif '=' in move:
@@ -64,7 +63,8 @@ def MakeMove(move, moves, current_turn):
             piece = Knight(move[2:-2], piece.color, board)
         GAME_PIECES[piece.color].append(piece)
 
-    new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+    else:
+        new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
 
 
     piece.move_count += 1
@@ -81,33 +81,40 @@ def UnmakeMove(move, moves, something):
     
 
     if move == 'O-O-O':
+
         old_row, old_col = piece.row, piece.col + 2
         rook = board[piece.row][piece.col + 1]
         board[rook.row][rook.col] = None
         rook.row, rook.col = rook.row, 0
         board[rook.row][rook.col] = rook
     elif move == 'O-O':
+
         old_row, old_col = piece.row, piece.col - 2
-        rook = board[piece.row][7]
+        rook = board[piece.row][piece.col - 1]
         board[rook.row][rook.col] = None
         rook.row, rook.col = rook.row, 7
         board[rook.row][rook.col] = rook
     elif 'x' in move:
+
         board[something[0].row][something[0].col] = something[0]
-        
+        GAME_PIECES[something[0].color].append(something[0])
+        if 'Q' in move or 'R' in move or 'B' in move or 'N' in move or 'K' in move:
+            old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+        else:
+            old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
     elif '=' in move:
-        
+
         old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
         GAME_PIECES[piece.color].remove(piece)
         piece = Pawn(move[:2], piece.color, board)
         piece.move_count = 6
         GAME_PIECES[piece.color].append(piece)
-
-
-    if 'R' in move or 'N' in move or 'K' in move or 'B' in move or 'Q' in move:
         old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
     else:
-        old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+        if 'Q' in move or 'R' in move or 'B' in move or 'N' in move or 'K' in move:
+            old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+        else:
+            old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
     
     piece.move_count -= 1
     board[old_row][old_col] = piece
@@ -124,7 +131,7 @@ def CountPossiblePositions(depth, current_turn, thr, pieces):
         return 1
 
     moves = safe_move(board, pieces, thr, current_turn)
-
+    
     numPositions = 0
     for move in moves:
         something = MakeMove(move, moves, current_turn)
@@ -132,9 +139,12 @@ def CountPossiblePositions(depth, current_turn, thr, pieces):
         f.write('\n')
         thre = collect_threats(board, GAME_PIECES[pieces[0].color], thr, TURN_COUNTER)
         nodes = CountPossiblePositions(depth - 1, current_turn + 1, thre, GAME_PIECES[opposing_color(pieces[0].color)])
+
         numPositions += nodes
         UnmakeMove(move, moves, something)
-        
+        if depth == 3:
+            print(move, nodes)
+    
     return numPositions
 
 
@@ -224,18 +234,22 @@ def safe_move(board, pieces, thr, current_turn):
         piece.move_count += 1
         current_turn += 1  # Virtual turn
 
-        board[new_row][new_col] = piece
+        
 
-        if 'x' in move and board[new_row][new_col] is None:
+        if 'x' in move:
             if board[new_row][new_col] is None:
                 cell = board[old_row][new_col]
                 GAME_PIECES[opposing_color(piece.color)].remove(cell)
                 new_row = old_row
             else:
                 GAME_PIECES[opposing_color(piece.color)].remove(cell)
+        
+        board[new_row][new_col] = piece
         thre = collect_threats(board, GAME_PIECES[opposing_color(piece.color)], thr, current_turn)
+        
         if kings[piece.color].under_check(thre):
             del moves[move]
+        
 # возвращаем все не место
         piece.row = old_row
         piece.col = old_col
@@ -342,8 +356,8 @@ def move_piece(board, pieces, thr, current_turn):
 a_pawn_w = Pawn('a2', 0, board)
 b_pawn_w = Pawn('b2', 0, board)
 c_pawn_w = Pawn('c2', 0, board)
-d_pawn_w = Pawn('d2', 0, board)
-e_pawn_w = Pawn('e2', 0, board)
+d_pawn_w = Pawn('d5', 0, board)
+e_pawn_w = Pawn('e4', 0, board)
 f_pawn_w = Pawn('f2', 0, board)
 g_pawn_w = Pawn('g2', 0, board)
 h_pawn_w = Pawn('h2', 0, board)
@@ -351,29 +365,29 @@ h_pawn_w = Pawn('h2', 0, board)
 
 # black pawns
 a_pawn_b = Pawn('a7', 1, board)
-b_pawn_b = Pawn('b7', 1, board)
+b_pawn_b = Pawn('b4', 1, board)
 c_pawn_b = Pawn('c7', 1, board)
 d_pawn_b = Pawn('d7', 1, board)
-e_pawn_b = Pawn('e7', 1, board)
+e_pawn_b = Pawn('e6', 1, board)
 f_pawn_b = Pawn('f7', 1, board)
-g_pawn_b = Pawn('g7', 1, board)
-h_pawn_b = Pawn('h7', 1, board)
+g_pawn_b = Pawn('g6', 1, board)
+h_pawn_b = Pawn('h3', 1, board)
  
 # white knights
-b_knight_w = Knight('b1', 0, board)
-g_knight_w = Knight('g1', 0, board)
+b_knight_w = Knight('c3', 0, board)
+g_knight_w = Knight('e5', 0, board)
 
 # black knights
-b_knight_b = Knight('b8', 1, board)
-g_knight_b = Knight('g8', 1, board)
+b_knight_b = Knight('b6', 1, board)
+g_knight_b = Knight('f6', 1, board)
 
 # white bishops 
-c_bishop_w = Bishop('c1', 0, board)
-f_bishop_w = Bishop('f1', 0, board)
+c_bishop_w = Bishop('e2', 0, board)
+f_bishop_w = Bishop('d2', 0, board)
 
 # black bishops
-c_bishop_b = Bishop('c8', 1, board)
-f_bishop_b = Bishop('f8', 1, board)
+c_bishop_b = Bishop('a6', 1, board)
+f_bishop_b = Bishop('g7', 1, board)
 
 # # white rooks
 a_rook_w = Rook('a1', 0, board)
@@ -384,10 +398,10 @@ a_rook_b = Rook('a8', 1, board)
 h_rook_b = Rook('h8', 1, board)
 
 # white queen
-queen_w = Queen('d1', 0, board)
+queen_w = Queen('f3', 0, board)
 
 # black queen 
-queen_b = Queen('d8', 1, board)
+queen_b = Queen('e7', 1, board)
 
 # white king
 king_w = King('e1', 0, board)
@@ -424,25 +438,14 @@ game = True
 
 black_threats = collect_threats(board, GAME_PIECES[Color.BLACK], my_threats=[], current_turn=TURN_COUNTER) # угроза черных на 1 ход
 
+
 turn = False
-f = open('positions.txt', 'a')
-print(CountPossiblePositions(4, TURN_COUNTER, black_threats, GAME_PIECES[Color.WHITE]))
+f = open('positions.txt', 'w')
+print(CountPossiblePositions(3, TURN_COUNTER, black_threats, GAME_PIECES[Color.WHITE]))
 f.close()
-print(len(GAME_PIECES[Color.BLACK]), len(GAME_PIECES[Color.WHITE]))
 sys.exit()
 while game:
-    print('+----+----+----+----+----+----+----+----+')
-    for line in board:
-        for cell in line:
-            if cell is not None:
-                if cell.color == 0:
-                    print(f'| \033[33m{cell.name}\033[0m ', end=' ')
-                else:
-                    print(f'| \033[32m{cell.name}\033[0m ', end=' ')
-            else:
-                print('|   ', end=' ')
-        print('|\n+----+----+----+----+----+----+----+----+')
-    print()
+    print_board(board)
     if turn == False and move_piece(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER):
         turn = True
         white_threats = collect_threats(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER)
