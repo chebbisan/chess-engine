@@ -32,7 +32,8 @@ coordinates = {'a8': (0, 0), 'b8': (0, 1), 'c8': (0, 2), 'd8': (0, 3), 'e8': (0,
 class Figure:
     def __init__(self):
         self.move_count = 0
-        self.last_move = -1
+        self.last_move_count = -1
+        self.last_move = ''
 
 
     def has_enemy(self, board, row, col):
@@ -48,7 +49,6 @@ class Pawn(Figure):
         self.col = coordinates[position][1]
         self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
-        self.threats = []
         self.name = '♙'
 
     def possible_moves(self, board, imp_moves, current_turn):
@@ -56,10 +56,9 @@ class Pawn(Figure):
         direction = -1 if self.color == 0 else 1
         p = get_coordinate(self.row, self.col)
         p_captures = [(-1, -1), (-1, 1)] if self.color == 0 else [(1, -1), (1, 1)]
-        self.threats = []
         en_passant_row = 3 if self.color == 0 else 4
         promote_row = 1 if self.color == 0 else 6
-
+        en_passant_moves = ['a2a4', 'b2b4', 'c2c4', 'd2d4', 'e2e4', 'f2f4', 'g2g4', 'h2h4', 'a2a4', 'b7b5', 'c7c5', 'd7d5', 'e7e5', 'f7f5', 'g7g5', 'h7h5']
         if in_bounds(self.row + 1 * direction, self.col) and board[self.row + 1 * direction][self.col] is None:
             if promote_row == self.row:
                 for letter in ['Q', 'N', 'R', 'B']:
@@ -73,15 +72,25 @@ class Pawn(Figure):
             new_row = self.row + p_capture[0]
             new_col = self.col + p_capture[1]
             if in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
                 if self.has_enemy(board, new_row, new_col):
                     dict_moves[p + 'x' + get_coordinate(new_row, new_col)] = self
                 if self.row == en_passant_row and is_pawn(board, self.row, new_col):
                     enemy_pawn = board[self.row][new_col]
-                    if enemy_pawn.move_count == 1 and enemy_pawn.color != self.color and enemy_pawn.last_move == current_turn - 1:
+                    if enemy_pawn.move_count == 1 and enemy_pawn.color != self.color and enemy_pawn.last_move_count == current_turn - 1 and enemy_pawn.last_move in en_passant_moves: # надо исправить, потому что можно сделать взятие на проходе если пешка на 1 клетку двигается
                         dict_moves[p + 'x' + get_coordinate(new_row, new_col)] = self
 
         return dict_moves
+    
+    def threatens(self, board):
+        threats = []
+        p_threats = [(-1, -1), (-1, 1)] if self.color == 0 else [(1, -1), (1, 1)]
+        for p_threat in p_threats:
+            new_row = self.row + p_threat[0]
+            new_col = self.col + p_threat[1]
+            if in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+        # print('Pawn: ', threats)
+        return threats
     
 
 class Rook(Figure):
@@ -91,19 +100,18 @@ class Rook(Figure):
         self.col = coordinates[position][1]
         self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
-        self.threats = []
+
         self.name = '♖'
 
     def possible_moves(self, board, imp_moves, current_turn):
         p = get_coordinate(self.row, self.col)
         dict_moves = {}
-        self.threats = []
+
 
         steps = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         for step in steps:
             new_row, new_col = self.row + step[0], self.col + step[1]
             while in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
                 if empty(board, new_row, new_col):
                     dict_moves['R' + p + get_coordinate(new_row, new_col)] = self
                 elif self.has_enemy(board, new_row, new_col):
@@ -115,6 +123,22 @@ class Rook(Figure):
         # return moves
         return dict_moves
     
+    def threatens(self, board):
+        threats = []
+        steps = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        for step in steps:
+            new_row, new_col = self.row + step[0], self.col + step[1]
+            while in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+                if empty(board, new_row, new_col):
+                    new_row, new_col = new_row + step[0], new_col + step[1]
+                    continue
+                else:
+                    break
+                
+        # print('Rook: ', threats)
+        return threats
+    
 
 class Bishop(Figure):
     def __init__(self, position, color, board):
@@ -123,18 +147,15 @@ class Bishop(Figure):
         self.col = coordinates[position][1]
         self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
-        self.threats = []
         self.name = '♗'
 
     def possible_moves(self, board, imp_moves, current_turn):
         p = get_coordinate(self.row, self.col)
         dict_moves = {}
-        self.threats = []
         steps = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
         for step in steps:
             new_row, new_col = self.row + step[0], self.col + step[1]
             while in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
                 if empty(board, new_row, new_col):
 
                     dict_moves['B' + p + get_coordinate(new_row, new_col)] = self
@@ -147,7 +168,20 @@ class Bishop(Figure):
         # return moves
         return dict_moves
 
-    
+    def threatens(self, board):
+        threats = []
+        steps = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+        for step in steps:
+            new_row, new_col = self.row + step[0], self.col + step[1]
+            while in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+                if empty(board, new_row, new_col):
+                    new_row, new_col = new_row + step[0], new_col + step[1]
+                    continue
+                else:
+                    break
+        # print('Bishop: ', threats)
+        return threats
 
 class Knight(Figure):
     def __init__(self, position, color, board):
@@ -156,19 +190,19 @@ class Knight(Figure):
         self.col = coordinates[position][1]
         self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
-        self.threats = []
+
         self.name = '♘'
 
     def possible_moves(self, board, imp_moves, current_turn):
         k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
         p = get_coordinate(self.row, self.col)
         dict_moves = {}
-        self.threats = []
+
         for k_move in k_moves:
             new_row = self.row + k_move[0]
             new_col = self.col + k_move[1]
             if in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
+
                 if board[new_row][new_col] == None:
                     dict_moves['N' + p + get_coordinate(new_row, new_col)] = self
                 elif self.has_enemy(board, new_row, new_col):
@@ -176,6 +210,16 @@ class Knight(Figure):
         # return moves
         return dict_moves
     
+    def threatens(self, board):
+        threats = []
+        k_moves = [(-2, 1), (-1, 2), (1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1)]
+        for step in k_moves:
+            new_row, new_col = self.row + step[0], self.col + step[1]
+            if in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+        # print('Knight: ', threats)
+        return threats
+
 
 class Queen(Figure):
     def __init__(self, position, color, board):
@@ -184,18 +228,15 @@ class Queen(Figure):
         self.col = coordinates[position][1]
         self.color = color # 0 - white, 1 - black
         board[self.row][self.col] = self
-        self.threats = []
         self.name = '♕'
 
     def possible_moves(self, board, imp_moves, current_turn):
         p = get_coordinate(self.row, self.col)
         dict_moves = {}
-        self.threats = []
         steps = [(1, 1), (-1, 1), (-1, -1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]
         for step in steps:
             new_row, new_col = self.row + step[0], self.col + step[1]
             while in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
                 if empty(board, new_row, new_col):
                     dict_moves['Q' + p + get_coordinate(new_row, new_col)] = self
                 elif self.has_enemy(board, new_row, new_col):
@@ -207,6 +248,20 @@ class Queen(Figure):
         # return moves
         return dict_moves
     
+    def threatens(self, board):
+        threats = []
+        steps = [(1, 1), (-1, 1), (-1, -1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]
+        for step in steps:
+            new_row, new_col = self.row + step[0], self.col + step[1]
+            while in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+                if empty(board, new_row, new_col):
+                    new_row, new_col = new_row + step[0], new_col + step[1]
+                    continue
+                else:
+                    break
+        # print('Queen: ', threats)
+        return threats
 
 class King(Figure):
     def __init__(self, position, color, board):
@@ -215,7 +270,6 @@ class King(Figure):
         self.col = coordinates[position][1]
         self.color = color # 1 - white, -1 - black
         board[self.row][self.col] = self
-        self.threats = []
         self.name = '♔'
 
     def possible_moves(self, board, imp_moves, current_turn):
@@ -224,12 +278,10 @@ class King(Figure):
         p_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
         p = get_coordinate(self.row, self.col)
         dict_moves = {}
-        self.threats = []
         for p_move in p_moves:
             new_row = self.row + p_move[0]
             new_col = self.col + p_move[1]
             if in_bounds(new_row, new_col):
-                self.threats.append(get_coordinate(new_row, new_col))
                 if board[new_row][new_col] == None and get_coordinate(new_row, new_col) not in imp_moves:
                     dict_moves['K' + p + get_coordinate(new_row, new_col)] = self
                 elif self.has_enemy(board, new_row, new_col) and get_coordinate(new_row, new_col) not in imp_moves:
@@ -263,3 +315,14 @@ class King(Figure):
     def under_check(self, imp_moves):
         if get_coordinate(self.row, self.col) in imp_moves:
             return True
+
+
+    def threatens(self, board):
+        threats = []
+        k_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
+        for step in k_moves:
+            new_row, new_col = self.row + step[0], self.col + step[1]
+            if in_bounds(new_row, new_col):
+                threats.append(get_coordinate(new_row, new_col))
+        # print('King: ', threats)
+        return threats

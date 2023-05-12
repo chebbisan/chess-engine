@@ -1,2 +1,2 @@
-a = 'Ra1a2'
-print(a[1:3])
+a = 'a2a4'
+print(a[1], a[3])
