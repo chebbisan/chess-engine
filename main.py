@@ -1,10 +1,448 @@
-# version 0.01 : board and pawn move
+# version 10 : mozhet rabotaet
 # author : cheb
 # chess engine
 
-from pawn import Pawn
+# quote of the day : "Сломал палец на ноге...("
 
-board = [[0, 0, 0, 0, 0, 0, 0, 0]] * 8
+import sys
+import enum
 
-king_pawn = Pawn(5, 3)
-king_pawn.move()
+from figures import Pawn, Rook, Bishop, Knight, Queen, King, coordinates, get_coordinate, get_number, get_letter, Figure
+
+
+class Color(enum.IntEnum):
+    WHITE = 0
+    BLACK = 1
+
+
+def print_board(board):
+    
+    print('+----+----+----+----+----+----+----+----+')
+    for line in board:
+        for cell in line:
+            if cell is not None:
+                if cell.color == 0:
+                    print(f'| \033[33m{cell.name}\033[0m ', end=' ')
+                else:
+                    print(f'| \033[32m{cell.name}\033[0m ', end=' ')
+            else:
+                print('|   ', end=' ')
+        print('|\n+----+----+----+----+----+----+----+----+')
+    print()
+
+
+def opposing_color(color: Color) -> Color:
+    return Color.BLACK if color == Color.WHITE else Color.WHITE
+
+def MakeMove(move, moves, current_turn): # додлеать рокуировак
+    piece = moves[move]
+    board[piece.row][piece.col] = None
+    
+    cell = None
+    
+    if move == 'O-O-O':
+        new_row, new_col = piece.row, piece.col - 2
+        rook = board[piece.row][0]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, new_col + 1
+        board[rook.row][rook.col] = rook
+
+    elif move == 'O-O':
+        new_row, new_col = piece.row, piece.col + 2
+        rook = board[piece.row][7]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, new_col - 1
+        board[rook.row][rook.col] = rook
+
+    elif 'x' in move:
+        new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+        if board[new_row][new_col] is None:
+            cell = board[piece.row][new_col]  # для взятия на проходе            
+            board[piece.row][new_col] = None
+
+        else:
+            cell = board[new_row][new_col]
+
+        GAME_PIECES[opposing_color(piece.color)].remove(cell)
+
+
+
+    elif '=' in move:
+        new_row, new_col = coordinates[move[2:-2]][0], coordinates[move[2:-2]][1]
+        promote_to = move[-1]
+        GAME_PIECES[piece.color].remove(piece)
+        if promote_to == 'Q':
+            piece = Queen(move[2:-2], piece.color, board)
+        elif promote_to == 'R':
+            piece = Rook(move[2:-2], piece.color, board)
+        elif promote_to == 'B':
+            piece = Bishop(move[2:-2], piece.color, board)
+        elif promote_to == 'N':
+            piece = Knight(move[2:-2], piece.color, board)
+        GAME_PIECES[piece.color].append(piece)
+
+    else:
+        new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+
+
+    piece.move_count += 1
+    board[new_row][new_col] = piece
+    piece.row, piece.col = new_row, new_col
+    last_move_count = piece.last_move_count
+    piece.last_move_count = current_turn
+    last_move = piece.last_move
+    piece.last_move = move
+    
+    return [cell, last_move_count, last_move]
+
+def UnmakeMove(move, moves, something):
+    piece = moves[move]
+    board[piece.row][piece.col] = None
+    
+
+    if move == 'O-O-O':
+
+        old_row, old_col = piece.row, piece.col + 2
+        rook = board[piece.row][piece.col + 1]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, 0
+        board[rook.row][rook.col] = rook
+    elif move == 'O-O':
+
+        old_row, old_col = piece.row, piece.col - 2
+        rook = board[piece.row][piece.col - 1]
+        board[rook.row][rook.col] = None
+        rook.row, rook.col = rook.row, 7
+        board[rook.row][rook.col] = rook
+    elif 'x' in move:
+
+        board[something[0].row][something[0].col] = something[0]
+        GAME_PIECES[something[0].color].append(something[0])
+        if 'Q' in move or 'R' in move or 'B' in move or 'N' in move or 'K' in move:
+            old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+        else:
+            old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+    elif '=' in move:
+
+        old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+        GAME_PIECES[piece.color].remove(piece)
+        piece = Pawn(move[:2], piece.color, board)
+        piece.move_count = 6
+        GAME_PIECES[piece.color].append(piece)
+        old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+    else:
+        if 'Q' in move or 'R' in move or 'B' in move or 'N' in move or 'K' in move:
+            old_row, old_col = coordinates[move[1:3]][0], coordinates[move[1:3]][1]
+        else:
+            old_row, old_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+    
+    piece.move_count -= 1
+    board[old_row][old_col] = piece
+    piece.row, piece.col = old_row, old_col
+    piece.last_move_count = something[1]
+    piece.last_move = something[2]
+
+    
+    return True
+
+def CountPossiblePositions(depth, current_turn, thr, pieces):
+    if depth == 0:
+        return 1
+
+    moves = safe_move(board, pieces, thr, current_turn)
+    numPositions = 0
+    for move in moves:
+
+        something = MakeMove(move, moves, current_turn,)
+        f.write('\t' * current_turn + move)
+        f.write('\n')
+        thre = collect_threats(GAME_PIECES[pieces[0].color], board)
+        nodes = CountPossiblePositions(depth - 1, current_turn + 1, thre, GAME_PIECES[opposing_color(pieces[0].color)])
+        numPositions += nodes
+        UnmakeMove(move, moves, something)
+        if depth == 3:
+            print(move, nodes)
+    return numPositions
+
+
+TURN_COUNTER = 0
+board = [[None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None]]
+
+
+def specify_dual_figure_moves(first_piece_moves, second_piece_moves, move):
+    # Если две фигуры могут сделать одно и тоже движение - надо указать ряд или колонку
+    # Эта функция переделает возможные ходы для таких фигур
+    first_piece = first_piece_moves[move]
+    second_piece = second_piece_moves[move]
+    if first_piece.col == second_piece.col:
+        first_piece_move = move[0] + get_number(first_piece.row) + move[1:]
+        second_piece_move = move[0] + get_number(second_piece.row) + move[1:]
+    else:
+        first_piece_move = move[0] + get_letter(first_piece.col) + move[1:]
+        second_piece_move = move[0] + get_letter(second_piece.col) + move[1:]
+    del first_piece_moves[move]
+    del second_piece_moves[move]
+    first_piece_moves[first_piece_move] = first_piece
+    second_piece_moves[second_piece_move] = second_piece
+    return True
+
+def collect_threats(pieces, board):
+    real_threats = set()
+    for piece in pieces:
+        piece_threats = piece.threatens(board)
+        for piece_threat in piece_threats:
+            real_threats.add(piece_threat)
+    return sorted(real_threats)
+       
+def safe_move(board, pieces, thr, current_turn):
+    # Эта функция убирает ходы, которые позволяют съесть короля
+    moves = {}
+    for piece in pieces:
+        piece_moves = piece.possible_moves(board, thr, current_turn)
+        # for move in moves.copy():
+        #     if move in piece_moves and moves[move] is not piece:
+        #         # print(move, piece.col, moves[move].col)
+        #         specify_dual_figure_moves(moves, piece_moves, move)
+        #         # print(moves, '\n' ,piece_moves)
+        moves = moves | piece_moves
+
+    for move in moves.copy():
+    
+        if move == 'O-O-O' or move == 'O-O':
+            continue
+        piece = moves[move]
+        if '=' in move:
+            new_row, new_col = coordinates[move[:2]][0], coordinates[move[:2]][1]
+            promote_to = move[-1]
+            return_piece = piece
+            pieces.remove(piece)
+            if promote_to == 'Q':
+                piece = Queen(move[:2], piece.color, board)
+            elif promote_to == 'R':
+                piece = Rook(move[:2], piece.color, board)
+            elif promote_to == 'B':
+                piece = Bishop(move[:2], piece.color, board)
+            elif promote_to == 'N':
+                piece = Knight(move[:2], piece.color, board)
+            pieces.append(piece)
+            old_row, old_col = return_piece.row, return_piece.col
+            cell = None
+        else:
+            new_row, new_col = coordinates[move[-2:]][0], coordinates[move[-2:]][1]
+            old_row, old_col = piece.row, piece.col
+            cell = board[new_row][new_col] ####
+        board[old_row][old_col] = None
+        piece.row = new_row
+        piece.col = new_col
+        piece.move_count += 1
+        current_turn += 1  # Virtual turn
+
+        
+
+        if 'x' in move:
+            if board[new_row][new_col] is None:
+                cell = board[old_row][new_col]
+                GAME_PIECES[opposing_color(piece.color)].remove(cell)
+                new_row = old_row
+            else:
+                GAME_PIECES[opposing_color(piece.color)].remove(cell)
+        
+        board[new_row][new_col] = piece
+        thre = collect_threats(GAME_PIECES[opposing_color(piece.color)], board)
+        if kings[piece.color].under_check(thre):
+            del moves[move]
+        
+# возвращаем все не место
+        piece.row = old_row
+        piece.col = old_col
+        board[new_row][new_col] = cell
+        board[old_row][old_col] = piece
+        piece.move_count -= 1
+        current_turn -= 1
+        if '=' in move:
+            pieces.remove(piece)
+            del piece
+            pieces.append(return_piece)
+            return_piece.row = old_row
+            return_piece.col = old_col
+            board[new_row][new_col] = cell
+            board[old_row][old_col] = return_piece
+        if 'x' in move and cell is not None:
+            GAME_PIECES[opposing_color(piece.color)].append(cell)
+    return moves  
+
+def move_piece(board, pieces, thr, current_turn):
+    # эта функция двигает фигуру, если был введен правильный ход и возвращает True
+    # если ход введен неверно, то функция вернет False
+
+    moves = safe_move(board, pieces, thr, current_turn)
+    #print(len(moves))
+    if moves: # если ходов нет, то программа заканчивает работу
+        actual_move = input()
+        
+        if actual_move in moves:
+            piece = moves[actual_move]
+            board[piece.row][piece.col] = None
+            if actual_move == 'O-O-O':
+                piece.row = piece.row
+                piece.col = piece.col - 2
+                piece.move_count += 1
+                piece.last_move_count = current_turn
+                board[piece.row][piece.col] = piece
+
+                rook = board[piece.row][0]
+                board[piece.row][0] = None
+                rook.row = rook.row
+                rook.col = piece.col + 1
+                board[rook.row][rook.col] = rook
+                return True
+            elif actual_move == 'O-O':
+                piece.row = piece.row
+                piece.col = piece.col + 2
+                piece.move_count += 1
+                piece.last_move_count = current_turn
+                board[piece.row][piece.col] = piece
+
+                rook = board[piece.row][7]
+                board[piece.row][7] = None
+                rook.row = rook.row
+                rook.col = piece.col - 1
+                board[rook.row][rook.col] = rook
+                return True
+            
+            old_row = piece.row
+            if '=' in actual_move:
+                new_row, new_col = coordinates[actual_move[:2]][0], coordinates[actual_move[:2]][1]
+                promote_to = actual_move[-1]
+                pieces.remove(piece)
+                if promote_to == 'Q':
+                    piece = Queen(actual_move[:2], piece.color, board)
+                elif promote_to == 'R':
+                    piece = Rook(actual_move[:2], piece.color, board)
+                elif promote_to == 'B':
+                    piece = Bishop(actual_move[:2], piece.color, board)
+                elif promote_to == 'N':
+                    piece = Knight(actual_move[:2], piece.color, board)
+                pieces.append(piece)
+            else:
+                new_row, new_col = coordinates[actual_move[-2:]][0], coordinates[actual_move[-2:]][1]
+
+            if 'x' in actual_move:
+                if board[new_row][new_col] is None:
+                    GAME_PIECES[board[old_row][new_col].color].remove(board[old_row][new_col])
+                    board[old_row][new_col] = None
+                else:
+                    GAME_PIECES[board[new_row][new_col].color].remove(board[new_row][new_col])
+
+
+            piece.row = new_row
+            piece.col = new_col
+            board[new_row][new_col] = piece
+            piece.move_count += 1
+            piece.last_move_count = current_turn
+
+            return True 
+        return False
+    else:
+        print('Mate/Stalemate!')
+        sys.exit()
+
+    
+
+# white pawns
+a_pawn_w = Pawn('a2', 0, board)
+b_pawn_w = Pawn('b2', 0, board)
+c_pawn_w = Pawn('c2', 0, board)
+d_pawn_w = Pawn('d5', 0, board)
+e_pawn_w = Pawn('e4', 0, board)
+f_pawn_w = Pawn('f2', 0, board)
+g_pawn_w = Pawn('g2', 0, board)
+h_pawn_w = Pawn('h2', 0, board)
+
+
+# black pawns
+a_pawn_b = Pawn('a7', 1, board)
+b_pawn_b = Pawn('b4', 1, board)
+c_pawn_b = Pawn('c7', 1, board)
+d_pawn_b = Pawn('d7', 1, board)
+e_pawn_b = Pawn('e6', 1, board)
+f_pawn_b = Pawn('f7', 1, board)
+g_pawn_b = Pawn('g6', 1, board)
+h_pawn_b = Pawn('h3', 1, board)
+ 
+# white knights
+b_knight_w = Knight('c3', 0, board)
+g_knight_w = Knight('e5', 0, board) # e5
+
+# black knights
+b_knight_b = Knight('b6', 1, board)
+g_knight_b = Knight('f6', 1, board)
+
+# white bishops 
+c_bishop_w = Bishop('d2', 0, board)
+f_bishop_w = Bishop('e2', 0, board)
+
+# black bishops
+c_bishop_b = Bishop('a6', 1, board)
+f_bishop_b = Bishop('g7', 1, board)
+
+# # white rooks
+a_rook_w = Rook('a1', 0, board)
+h_rook_w = Rook('h1', 0, board)
+
+# black rooks
+a_rook_b = Rook('a8', 1, board)
+h_rook_b = Rook('h8', 1, board)
+
+# white queen
+queen_w = Queen('f3', 0, board)
+
+# black queen 
+queen_b = Queen('e7', 1, board)
+
+# white king
+king_w = King('e1', 0, board) # e1
+
+# black king 
+king_b = King('e8', 1, board) # e8
+
+GAME_PIECES = {Color.WHITE: [], Color.BLACK: []}
+kings = {Color.WHITE: king_w, Color.BLACK: king_b}
+
+for line in board:
+    for cell in line:
+        if cell is not None:
+            GAME_PIECES[cell.color].append(cell)
+
+
+game = True
+
+black_threats = collect_threats(GAME_PIECES[Color.BLACK], board)
+white_threats = collect_threats(GAME_PIECES[Color.WHITE], board)
+
+turn = False
+print_board(board)
+f = open('positions.txt', 'w')
+print(CountPossiblePositions(3, TURN_COUNTER, black_threats, GAME_PIECES[Color.WHITE])) # white_threats, GAME_PIECES[Color.BLACK])
+f.close()
+sys.exit()
+while game:
+    print_board(board)
+    if turn == False and move_piece(board, GAME_PIECES[Color.WHITE], black_threats, TURN_COUNTER):
+        turn = True
+        white_threats = collect_threats(GAME_PIECES[Color.WHITE])
+    elif turn == True and move_piece(board, GAME_PIECES[Color.BLACK], white_threats, TURN_COUNTER):
+        turn = False
+        black_threats = collect_threats(GAME_PIECES[Color.BLACK])
+    else:
+        print('---= Impossible move! =--- \n \t   or\n---= Incorrect input! =---')
+    TURN_COUNTER += 1
+
+
